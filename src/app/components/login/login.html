@@ -1,0 +1,113 @@
+<div class="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-red-900 flex items-center justify-center p-3 sm:p-4">
+  <div class="absolute top-3 left-3 sm:top-4 sm:left-4">
+    <a 
+      routerLink="/"
+      class="inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 text-xs sm:text-sm text-white hover:bg-white/10 rounded transition h-9 sm:h-10"
+    >
+      <svg class="h-3 w-3 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+      </svg>
+      <span class="hidden sm:inline">Volver al inicio</span>
+      <span class="sm:hidden">Volver</span>
+    </a>
+  </div>
+  
+  <div class="w-full max-w-md mx-auto bg-white rounded-lg shadow-xl">
+    <div class="p-4 sm:p-6 space-y-1">
+      <div class="flex justify-center mb-3 sm:mb-4">
+        <div class="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 bg-gradient-to-br from-red-600 to-red-800 rounded-full flex items-center justify-center">
+          <span class="text-white text-3xl sm:text-4xl lg:text-5xl font-bold">L</span>
+        </div>
+      </div>
+      <h2 class="text-xl sm:text-2xl text-center font-bold">Iniciar Sesión</h2>
+      <p class="text-center text-sm sm:text-base text-gray-600">
+        Ingresa a tu cuenta de Lotus Body Car
+      </p>
+    </div>
+    
+    <form (ngSubmit)="handleSubmit($event)">
+      <div class="space-y-3 sm:space-y-4 p-4 sm:p-6">
+        @if (error()) {
+          <div class="bg-red-50 border border-red-200 text-red-700 px-3 sm:px-4 py-2 sm:py-3 rounded text-sm">
+            {{ error() }}
+          </div>
+        }
+
+        <div class="space-y-2">
+          <label for="email" class="block text-sm font-medium">Correo Electrónico</label>
+          <div class="relative">
+            <svg class="absolute left-3 top-3 h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            <input
+              id="email"
+              type="email"
+              placeholder="correo@ejemplo.com"
+              [(ngModel)]="email"
+              name="email"
+              class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+            />
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <label for="password" class="block text-sm font-medium">Contraseña</label>
+          <div class="relative">
+            <svg class="absolute left-3 top-3 h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <input
+              id="password"
+              [type]="showPassword() ? 'text' : 'password'"
+              placeholder="••••••••"
+              [(ngModel)]="password"
+              name="password"
+              class="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+            />
+            <button
+              type="button"
+              (click)="togglePassword()"
+              class="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+            >
+              @if (showPassword()) {
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                </svg>
+              } @else {
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              }
+            </button>
+          </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
+          <label class="flex items-center gap-2 text-xs sm:text-sm">
+            <input type="checkbox" class="rounded" />
+            Recordarme
+          </label>
+          <button type="button" class="text-xs sm:text-sm text-red-600 hover:underline">
+            ¿Olvidaste tu contraseña?
+          </button>
+        </div>
+      </div>
+      
+      <div class="flex flex-col gap-3 sm:gap-4 p-4 sm:p-6">
+        <button 
+          type="submit" 
+          class="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-md font-medium transition text-sm sm:text-base"
+        >
+          Iniciar Sesión
+        </button>
+        <div class="text-center text-xs sm:text-sm text-gray-600">
+          ¿No tienes una cuenta?
+          <a routerLink="/register" class="text-red-600 hover:underline ml-1">
+            Regístrate aquí
+          </a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>

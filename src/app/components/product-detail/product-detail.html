@@ -1,0 +1,209 @@
+<div class="min-h-screen bg-gray-50">
+  <app-header />
+
+  <div class="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
+    <button 
+      (click)="goToHome()"
+      class="inline-flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 rounded transition mb-3 sm:mb-4"
+    >
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+      </svg>
+      Volver al catálogo
+    </button>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
+      <!-- Image Gallery -->
+      <div>
+        <div class="overflow-hidden mb-3 sm:mb-4 bg-white rounded-lg shadow">
+          <div class="aspect-square bg-gray-100">
+            <img
+              [src]="product().images[selectedImage()]"
+              [alt]="product().name"
+              class="w-full h-full object-cover"
+              (error)="$any($event.target).src='https://via.placeholder.com/800x800?text=No+Image'"
+            />
+          </div>
+        </div>
+        <div class="grid grid-cols-3 gap-2 sm:gap-3 lg:gap-4">
+          @for (image of product().images; track image; let i = $index) {
+            <div 
+              class="overflow-hidden cursor-pointer border-2 transition-colors rounded-lg bg-white shadow"
+              [class.border-red-600]="selectedImage() === i"
+              [class.border-transparent]="selectedImage() !== i"
+              (click)="selectImage(i)"
+            >
+              <div class="aspect-square bg-gray-100">
+                <img
+                  [src]="image"
+                  [alt]="product().name + ' - ' + (i + 1)"
+                  class="w-full h-full object-cover"
+                  (error)="$any($event.target).src='https://via.placeholder.com/200x200?text=No+Image'"
+                />
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Product Info -->
+      <div>
+        <div class="flex items-start justify-between mb-3 sm:mb-4 gap-3">
+          <div class="flex-1 min-w-0">
+            <span class="inline-block px-2 py-1 text-xs bg-red-100 text-red-800 rounded mb-2">{{ product().category }}</span>
+            <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold mb-2">{{ product().name }}</h1>
+            <p class="text-sm sm:text-base text-gray-600">
+              {{ product().brand }} • {{ product().model }}
+            </p>
+          </div>
+          <div class="flex gap-2 flex-shrink-0">
+            <button class="h-9 w-9 sm:h-10 sm:w-10 border rounded-md hover:bg-gray-50 flex items-center justify-center">
+              <svg class="h-3 w-3 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            </button>
+            <button class="h-9 w-9 sm:h-10 sm:w-10 border rounded-md hover:bg-gray-50 flex items-center justify-center">
+              <svg class="h-3 w-3 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="bg-red-50 border border-red-200 rounded-lg p-4 sm:p-6 mb-4 sm:mb-6">
+          <p class="text-2xl sm:text-3xl font-bold text-red-600 mb-2">
+            {{ formatPrice(product().price) }}
+          </p>
+          <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600">
+            <div class="flex items-center gap-1">
+              <svg class="h-3 w-3 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+              </svg>
+              <span>{{ product().stock }} disponibles</span>
+            </div>
+            <span class="px-2 py-1 text-xs bg-gray-100 rounded">{{ product().condition }}</span>
+          </div>
+        </div>
+
+        <!-- Seller Info -->
+        <div class="bg-white rounded-lg shadow mb-4 sm:mb-6 p-3 sm:p-4">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div class="flex-1">
+              <div class="flex items-center gap-2 mb-1">
+                <p class="text-sm sm:text-base font-medium">{{ product().seller.name }}</p>
+                @if (product().seller.verified) {
+                  <svg class="h-3 w-3 sm:h-4 sm:w-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                }
+              </div>
+              <div class="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
+                <div class="flex items-center gap-1">
+                  <svg class="h-3 w-3 sm:h-4 sm:w-4 fill-yellow-400 text-yellow-400" viewBox="0 0 24 24">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                  </svg>
+                  <span>{{ product().seller.rating }}</span>
+                </div>
+                <span>•</span>
+                <span>{{ product().seller.reviews }} reseñas</span>
+              </div>
+              <div class="flex items-center gap-1 text-xs sm:text-sm text-gray-600 mt-1">
+                <svg class="h-3 w-3 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span>{{ product().location }}</span>
+              </div>
+            </div>
+            <button class="border rounded-md px-4 py-2 hover:bg-gray-50 text-xs sm:text-sm w-full sm:w-auto">
+              Ver perfil
+            </button>
+          </div>
+        </div>
+
+        <!-- Quantity and Actions -->
+        @if (user()) {
+          <div class="space-y-3 mb-4 sm:mb-6">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+              <label class="text-xs sm:text-sm font-medium">Cantidad:</label>
+              <div class="flex items-center border rounded-lg">
+                <button
+                  (click)="decreaseQuantity()"
+                  class="h-9 w-9 sm:h-10 sm:w-10 hover:bg-gray-100 rounded-l-lg"
+                >
+                  -
+                </button>
+                <span class="px-3 sm:px-4 py-2 min-w-[2.5rem] sm:min-w-[3rem] text-center text-sm sm:text-base">{{ quantity() }}</span>
+                <button
+                  (click)="increaseQuantity()"
+                  class="h-9 w-9 sm:h-10 sm:w-10 hover:bg-gray-100 rounded-r-lg"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button 
+                (click)="handleAddToCart()"
+                class="border rounded-md px-4 py-2 hover:bg-gray-50 text-xs sm:text-sm flex items-center justify-center gap-2"
+              >
+                <svg class="h-3 w-3 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <span class="hidden sm:inline">Agregar al carrito</span>
+                <span class="sm:hidden">Al carrito</span>
+              </button>
+              <button 
+                (click)="buyNow()"
+                class="bg-red-600 hover:bg-red-700 text-white rounded-md px-4 py-2 text-xs sm:text-sm"
+              >
+                Comprar ahora
+              </button>
+            </div>
+            <button 
+              (click)="contactSeller()"
+              class="w-full border rounded-md px-4 py-2 hover:bg-gray-50 text-xs sm:text-sm"
+            >
+              Contactar al vendedor
+            </button>
+          </div>
+        } @else {
+          <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
+            <p class="text-xs sm:text-sm mb-3">
+              Inicia sesión para comprar este producto
+            </p>
+            <a 
+              routerLink="/login"
+              class="block w-full bg-red-600 hover:bg-red-700 text-white rounded-md px-4 py-2 text-xs sm:text-sm text-center"
+            >
+              Iniciar Sesión
+            </a>
+          </div>
+        }
+
+        <div class="border-t my-4 sm:my-6"></div>
+
+        <!-- Description -->
+        <div class="mb-4 sm:mb-6">
+          <h3 class="text-lg sm:text-xl font-bold mb-2 sm:mb-3">Descripción</h3>
+          <p class="text-sm sm:text-base text-gray-600 leading-relaxed">{{ product().description }}</p>
+        </div>
+
+        <!-- Specifications -->
+        <div>
+          <h3 class="text-lg sm:text-xl font-bold mb-2 sm:mb-3">Especificaciones Técnicas</h3>
+          <div class="bg-white rounded-lg shadow p-3 sm:p-4">
+            <dl class="space-y-2 sm:space-y-3">
+              @for (spec of getSpecificationsEntries(); track spec[0]) {
+                <div class="flex flex-col sm:flex-row sm:justify-between py-2 border-b last:border-0 gap-1 sm:gap-0">
+                  <dt class="text-xs sm:text-sm text-gray-600 font-medium">{{ spec[0] }}</dt>
+                  <dd class="text-xs sm:text-sm text-right">{{ spec[1] }}</dd>
+                </div>
+              }
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

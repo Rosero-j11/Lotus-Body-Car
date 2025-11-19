@@ -1,0 +1,257 @@
+<div class="min-h-screen bg-gray-50">
+  <app-header />
+
+  <!-- Hero Section -->
+  <div class="bg-gradient-to-r from-gray-900 via-gray-800 to-red-900 text-white">
+    <div class="container mx-auto px-3 sm:px-4 py-6 sm:py-8 lg:py-12">
+      <div class="max-w-3xl mx-auto text-center">
+        <h2 class="text-xl sm:text-2xl lg:text-4xl mb-3 sm:mb-4">
+          Encuentra las Mejores Piezas Automotrices de Alta Gama
+        </h2>
+        <p class="text-sm sm:text-base text-red-100 mb-4 sm:mb-6 lg:mb-8 px-4">
+          Marketplace especializado en piezas premium para vehículos de lujo
+        </p>
+
+        <!-- Search Bar -->
+        <div class="bg-white rounded-lg p-1.5 sm:p-2 flex flex-col sm:flex-row gap-2">
+          <div class="flex-1 flex items-center gap-2 px-2 sm:px-3">
+            <svg class="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Buscar por nombre, marca..."
+              [(ngModel)]="searchQuery"
+              class="flex-1 border-0 focus:outline-none focus:ring-0 text-sm sm:text-base px-2 py-2"
+            />
+          </div>
+          <button class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded w-full sm:w-auto text-sm sm:text-base font-medium transition">
+            Buscar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="container mx-auto px-3 sm:px-4 py-4 sm:py-6 lg:py-8">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-3 sm:gap-0">
+      <div>
+        <h3 class="text-xl sm:text-2xl font-semibold mb-1">Catálogo de Piezas</h3>
+        <p class="text-sm sm:text-base text-gray-600">{{ mockProducts.length }} productos disponibles</p>
+      </div>
+
+      <div class="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+        <!-- Filter Button (Mobile) -->
+        <button 
+          (click)="toggleFilterSheet()"
+          class="lg:hidden flex-1 sm:flex-none border border-gray-300 rounded px-4 py-2 text-xs sm:text-sm hover:bg-gray-50 flex items-center justify-center gap-2"
+        >
+          <svg class="h-3 w-3 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+          </svg>
+          Filtros
+        </button>
+
+        <!-- Sort By -->
+        <select 
+          [(ngModel)]="sortBy"
+          class="w-full sm:w-[180px] lg:w-[200px] text-xs sm:text-sm border border-gray-300 rounded px-3 py-2"
+        >
+          <option value="relevance">Relevancia</option>
+          <option value="price-low">Precio: Menor a Mayor</option>
+          <option value="price-high">Precio: Mayor a Menor</option>
+          <option value="date-new">Más Reciente</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
+      <!-- Filters Sidebar (Desktop) -->
+      <div class="hidden lg:block">
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h4 class="font-semibold">Filtros</h4>
+            <button (click)="clearFilters()" class="text-sm text-gray-600 hover:text-gray-900">
+              Limpiar
+            </button>
+          </div>
+
+          <div class="space-y-6">
+            <!-- Marca Filter -->
+            <div>
+              <h5 class="font-medium mb-3">Marca</h5>
+              <div class="space-y-2">
+                @for (brand of brands; track brand) {
+                  <div class="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      [id]="'brand-' + brand"
+                      [checked]="selectedBrands().includes(brand)"
+                      (change)="toggleBrand(brand)"
+                      class="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                    />
+                    <label [for]="'brand-' + brand" class="text-sm cursor-pointer">
+                      {{ brand }}
+                    </label>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- Categoría Filter -->
+            <div>
+              <h5 class="font-medium mb-3">Categoría</h5>
+              <div class="space-y-2">
+                @for (category of categories; track category) {
+                  <div class="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      [id]="'category-' + category"
+                      [checked]="selectedCategories().includes(category)"
+                      (change)="toggleCategory(category)"
+                      class="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                    />
+                    <label [for]="'category-' + category" class="text-sm cursor-pointer">
+                      {{ category }}
+                    </label>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Products Grid -->
+      <div class="lg:col-span-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
+          @for (product of mockProducts; track product.id) {
+            <div 
+              (click)="viewProduct(product.id)"
+              class="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+            >
+              <div class="aspect-square relative overflow-hidden bg-gray-100">
+                <img
+                  [src]="product.image"
+                  [alt]="product.name"
+                  class="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                  onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22400%22%3E%3Crect fill=%22%23f3f4f6%22 width=%22400%22 height=%22400%22/%3E%3Ctext fill=%22%239ca3af%22 font-family=%22sans-serif%22 font-size=%2224%22 dy=%2210.5%22 font-weight=%22bold%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22%3ENo Image%3C/text%3E%3C/svg%3E'"
+                />
+                <span class="absolute top-2 right-2 bg-primary text-white text-xs px-2 py-1 rounded">
+                  {{ product.condition }}
+                </span>
+              </div>
+              <div class="p-3 sm:p-4">
+                <div class="mb-2">
+                  <span class="inline-block bg-secondary text-secondary-foreground text-xs px-2 py-1 rounded">
+                    {{ product.category }}
+                  </span>
+                </div>
+                <h3 class="text-sm sm:text-base font-semibold mb-1 line-clamp-1">{{ product.name }}</h3>
+                <p class="text-xs sm:text-sm text-gray-600 mb-2">
+                  {{ product.brand }} {{ product.model }}
+                </p>
+                <p class="text-lg sm:text-xl lg:text-2xl font-bold text-red-600 mb-2">
+                  {{ formatPrice(product.price) }}
+                </p>
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs sm:text-sm text-gray-500 gap-1 sm:gap-0">
+                  <span class="truncate max-w-full sm:max-w-[50%]">{{ product.seller }}</span>
+                  <span>{{ product.location }}</span>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Filter Sheet -->
+  @if (isFilterSheetOpen()) {
+    <div class="fixed inset-0 z-50 lg:hidden">
+      <!-- Backdrop -->
+      <div 
+        class="fixed inset-0 bg-black/50" 
+        (click)="toggleFilterSheet()"
+      ></div>
+      
+      <!-- Sheet -->
+      <div class="fixed inset-y-0 right-0 w-full max-w-sm bg-white shadow-xl">
+        <div class="flex flex-col h-full">
+          <!-- Header -->
+          <div class="px-6 py-4 border-b">
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-semibold">Filtros</h3>
+              <button 
+                (click)="toggleFilterSheet()"
+                class="p-2 hover:bg-gray-100 rounded"
+              >
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <p class="text-sm text-gray-600 mt-1">
+              Refina tu búsqueda con los filtros disponibles
+            </p>
+          </div>
+
+          <!-- Content -->
+          <div class="flex-1 overflow-y-auto px-6 py-4">
+            <div class="space-y-6">
+              <!-- Marca Filter -->
+              <div>
+                <h5 class="font-medium mb-3">Marca</h5>
+                <div class="space-y-2">
+                  @for (brand of brands; track brand) {
+                    <div class="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        [id]="'mobile-brand-' + brand"
+                        [checked]="selectedBrands().includes(brand)"
+                        (change)="toggleBrand(brand)"
+                        class="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                      />
+                      <label [for]="'mobile-brand-' + brand" class="text-sm cursor-pointer">
+                        {{ brand }}
+                      </label>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <!-- Categoría Filter -->
+              <div>
+                <h5 class="font-medium mb-3">Categoría</h5>
+                <div class="space-y-2">
+                  @for (category of categories; track category) {
+                    <div class="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        [id]="'mobile-category-' + category"
+                        [checked]="selectedCategories().includes(category)"
+                        (change)="toggleCategory(category)"
+                        class="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                      />
+                      <label [for]="'mobile-category-' + category" class="text-sm cursor-pointer">
+                        {{ category }}
+                      </label>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <button 
+                (click)="clearFilters()" 
+                class="w-full border border-gray-300 rounded px-4 py-2 hover:bg-gray-50"
+              >
+                Limpiar Filtros
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

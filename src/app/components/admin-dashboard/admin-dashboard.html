@@ -1,0 +1,340 @@
+@if (!user() || user()!.role !== 'admin') {
+  <div class="min-h-screen bg-gray-50">
+    <app-header />
+    <div class="container mx-auto px-4 py-12 text-center">
+      <h2 class="text-2xl mb-4 font-bold">Acceso no autorizado</h2>
+      <p class="text-gray-600 mb-4">Solo los administradores pueden acceder a este panel</p>
+      <button (click)="goToHome()" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-md">
+        Volver al inicio
+      </button>
+    </div>
+  </div>
+} @else {
+  <div class="min-h-screen bg-gray-50">
+    <app-header />
+
+    <div class="container mx-auto px-4 py-6">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="text-3xl font-bold mb-1">Panel de Administración</h1>
+          <p class="text-gray-600">Gestión y reportes del sistema</p>
+        </div>
+        <button 
+          (click)="goToHome()"
+          class="border rounded-md px-4 py-2 hover:bg-gray-50 flex items-center gap-2"
+        >
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Volver al inicio
+        </button>
+      </div>
+
+      <!-- Stats Overview -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        <div class="bg-white rounded-lg shadow p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-gray-600 text-sm mb-1">Ventas Totales</p>
+              <p class="text-2xl font-bold">{{ formatPrice(stats.totalSales) }}</p>
+              <p class="text-xs text-green-600 mt-1 flex items-center gap-1">
+                <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+                +12% vs mes anterior
+              </p>
+            </div>
+            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+              <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-gray-600 text-sm mb-1">Pedidos</p>
+              <p class="text-2xl font-bold">{{ stats.totalOrders }}</p>
+              <p class="text-xs text-green-600 mt-1 flex items-center gap-1">
+                <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+                +8% vs mes anterior
+              </p>
+            </div>
+            <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+              <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-gray-600 text-sm mb-1">Productos</p>
+              <p class="text-2xl font-bold">{{ stats.totalProducts }}</p>
+              <p class="text-xs text-gray-500 mt-1">Activos en catálogo</p>
+            </div>
+            <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+              <svg class="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-gray-600 text-sm mb-1">Usuarios</p>
+              <p class="text-2xl font-bold">{{ stats.totalUsers }}</p>
+              <p class="text-xs text-gray-500 mt-1">Registrados totales</p>
+            </div>
+            <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+              <svg class="h-6 w-6 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="space-y-6">
+        <div class="border-b border-gray-200">
+          <nav class="flex gap-4">
+            <button
+              (click)="activeTab.set('reports')"
+              [class.border-red-600]="activeTab() === 'reports'"
+              [class.text-red-600]="activeTab() === 'reports'"
+              class="px-4 py-2 border-b-2 border-transparent hover:border-gray-300 transition"
+            >
+              Reportes
+            </button>
+            <button
+              (click)="activeTab.set('sales')"
+              [class.border-red-600]="activeTab() === 'sales'"
+              [class.text-red-600]="activeTab() === 'sales'"
+              class="px-4 py-2 border-b-2 border-transparent hover:border-gray-300 transition"
+            >
+              Ventas
+            </button>
+            <button
+              (click)="activeTab.set('products')"
+              [class.border-red-600]="activeTab() === 'products'"
+              [class.text-red-600]="activeTab() === 'products'"
+              class="px-4 py-2 border-b-2 border-transparent hover:border-gray-300 transition"
+            >
+              Productos
+            </button>
+            <button
+              (click)="activeTab.set('orders')"
+              [class.border-red-600]="activeTab() === 'orders'"
+              [class.text-red-600]="activeTab() === 'orders'"
+              class="px-4 py-2 border-b-2 border-transparent hover:border-gray-300 transition"
+            >
+              Pedidos
+            </button>
+          </nav>
+        </div>
+
+        <!-- Reports Tab -->
+        @if (activeTab() === 'reports') {
+          <div class="bg-white rounded-lg shadow">
+            <div class="p-6 border-b">
+              <h2 class="text-xl font-bold">Generar Reporte</h2>
+              <p class="text-sm text-gray-600 mt-1">Exporta reportes detallados de ventas, inventario y compras</p>
+            </div>
+            <div class="p-6 space-y-6">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="space-y-2">
+                  <label class="block text-sm font-medium">Tipo de Reporte</label>
+                  <select
+                    [value]="reportType()"
+                    (change)="reportType.set($any($event.target).value)"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                  >
+                    <option value="sales">Ventas</option>
+                    <option value="inventory">Inventario</option>
+                    <option value="purchases">Compras</option>
+                    <option value="customers">Clientes</option>
+                    <option value="revenue">Ingresos</option>
+                  </select>
+                </div>
+
+                <div class="space-y-2">
+                  <label class="block text-sm font-medium">Período</label>
+                  <select
+                    [value]="reportPeriod()"
+                    (change)="reportPeriod.set($any($event.target).value)"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                  >
+                    <option value="day">Diario</option>
+                    <option value="week">Semanal</option>
+                    <option value="month">Mensual</option>
+                    <option value="quarter">Trimestral</option>
+                    <option value="year">Anual</option>
+                  </select>
+                </div>
+
+                <div class="space-y-2">
+                  <label class="block text-sm font-medium">Formato</label>
+                  <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500">
+                    <option value="pdf">PDF</option>
+                    <option value="excel">Excel</option>
+                    <option value="csv">CSV</option>
+                  </select>
+                </div>
+              </div>
+
+              <button 
+                (click)="handleExportReport()"
+                class="w-full md:w-auto bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-md flex items-center justify-center gap-2"
+              >
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Generar y Descargar Reporte
+              </button>
+            </div>
+          </div>
+        }
+
+        <!-- Sales Tab -->
+        @if (activeTab() === 'sales') {
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-white rounded-lg shadow">
+              <div class="p-6 border-b">
+                <h2 class="text-xl font-bold">Ventas Mensuales</h2>
+                <p class="text-sm text-gray-600 mt-1">Últimos 6 meses</p>
+              </div>
+              <div class="p-6">
+                <div class="space-y-4">
+                  @for (item of stats.monthlySales; track item.month) {
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm text-gray-600">{{ item.month }}</span>
+                      <div class="flex-1 mx-4">
+                        <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                          <div 
+                            class="h-full bg-red-600 rounded-full"
+                            [style.width]="getBarWidth(item.sales)"
+                          ></div>
+                        </div>
+                      </div>
+                      <span class="text-sm font-medium">{{ formatPrice(item.sales) }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow">
+              <div class="p-6 border-b">
+                <h2 class="text-xl font-bold">Productos Más Vendidos</h2>
+                <p class="text-sm text-gray-600 mt-1">Top 5 por ingresos</p>
+              </div>
+              <div class="p-6">
+                <div class="space-y-4">
+                  @for (product of stats.topProducts; track product.name; let i = $index) {
+                    <div class="flex items-start gap-3 pb-3 border-b last:border-0">
+                      <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <span class="font-medium text-blue-600">#{{ i + 1 }}</span>
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <p class="font-medium truncate">{{ product.name }}</p>
+                        <p class="text-sm text-gray-600">{{ product.sales }} unidades vendidas</p>
+                      </div>
+                      <div class="text-right">
+                        <p class="font-medium text-green-600">{{ formatPrice(product.revenue) }}</p>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- Products Tab -->
+        @if (activeTab() === 'products') {
+          <div class="bg-white rounded-lg shadow">
+            <div class="p-6 border-b">
+              <h2 class="text-xl font-bold">Análisis de Productos</h2>
+              <p class="text-sm text-gray-600 mt-1">Vista general del inventario</p>
+            </div>
+            <div class="p-6">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="p-4 border rounded-lg">
+                  <p class="text-sm text-gray-600 mb-1">Total de Productos</p>
+                  <p class="text-3xl font-bold">{{ stats.totalProducts }}</p>
+                </div>
+                <div class="p-4 border rounded-lg">
+                  <p class="text-sm text-gray-600 mb-1">Productos Activos</p>
+                  <p class="text-3xl font-bold">142</p>
+                </div>
+                <div class="p-4 border rounded-lg">
+                  <p class="text-sm text-gray-600 mb-1">Productos Vendidos</p>
+                  <p class="text-3xl font-bold">14</p>
+                </div>
+              </div>
+              <button class="border rounded-md px-4 py-2 hover:bg-gray-50 flex items-center gap-2">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                Ver Reporte Detallado
+              </button>
+            </div>
+          </div>
+        }
+
+        <!-- Orders Tab -->
+        @if (activeTab() === 'orders') {
+          <div class="bg-white rounded-lg shadow">
+            <div class="p-6 border-b">
+              <h2 class="text-xl font-bold">Pedidos Recientes</h2>
+              <p class="text-sm text-gray-600 mt-1">Últimos pedidos registrados en el sistema</p>
+            </div>
+            <div class="p-6">
+              <div class="overflow-x-auto">
+                <table class="w-full">
+                  <thead class="bg-gray-50 border-b">
+                    <tr>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cliente</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Producto</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Monto</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y">
+                    @for (order of stats.recentOrders; track order.id) {
+                      <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3 text-sm font-medium">{{ order.id }}</td>
+                        <td class="px-4 py-3 text-sm">{{ order.customer }}</td>
+                        <td class="px-4 py-3 text-sm">{{ order.product }}</td>
+                        <td class="px-4 py-3 text-sm">{{ formatPrice(order.amount) }}</td>
+                        <td class="px-4 py-3">
+                          <span [class]="'inline-flex px-2 py-1 text-xs rounded-full ' + getStatusClass(order.status)">
+                            {{ order.status }}
+                          </span>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-600">
+                          {{ order.date }}
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+}

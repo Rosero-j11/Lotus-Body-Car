@@ -1,0 +1,118 @@
+<div class="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-red-900 flex items-center justify-center p-3 sm:p-4">
+  <!-- Botón Volver -->
+  <div class="absolute top-3 left-3 sm:top-4 sm:left-4">
+    <app-button 
+      variant="ghost" 
+      (click)="navigateHome()"
+      className="gap-1 sm:gap-2 text-white hover:text-white hover:bg-white/10 text-xs sm:text-sm px-2 sm:px-4 h-9 sm:h-10"
+    >
+      <lucide-icon [img]="ArrowLeft" [size]="16" class="w-3 h-3 sm:w-4 sm:h-4"></lucide-icon>
+      <span class="hidden sm:inline">Volver al inicio</span>
+      <span class="sm:hidden">Volver</span>
+    </app-button>
+  </div>
+  
+  <!-- Card de Login -->
+  <app-card className="w-full max-w-md mx-auto">
+    <app-card-header className="text-center">
+      <!-- Logo -->
+      <div class="flex justify-center mb-4">
+        <img 
+          [src]="logoLotus" 
+          alt="Lotus Body Car Logo" 
+          class="w-20 h-20 sm:w-24 sm:h-24 object-contain"
+        />
+      </div>
+      
+      <app-card-title className="text-xl sm:text-2xl">
+        Iniciar Sesión
+      </app-card-title>
+      
+      <app-card-description>
+        Ingresa a tu cuenta de Lotus Body Car
+      </app-card-description>
+    </app-card-header>
+
+    <!-- Formulario -->
+    <form (ngSubmit)="handleSubmit($event)">
+      <app-card-content className="space-y-4">
+        <!-- Alerta de Error -->
+        @if (error()) {
+          <app-alert variant="destructive">
+            <lucide-icon [img]="Eye" [size]="16"></lucide-icon>
+            <app-alert-title>Error</app-alert-title>
+            <app-alert-description>{{ error() }}</app-alert-description>
+          </app-alert>
+        }
+
+        <!-- Campo Email -->
+        <div class="space-y-2">
+          <app-label for="email" className="flex items-center gap-2">
+            <lucide-icon [img]="Mail" [size]="16"></lucide-icon>
+            Correo Electrónico
+          </app-label>
+          <app-input
+            id="email"
+            type="email"
+            placeholder="tu@email.com"
+            [value]="email()"
+            (input)="email.set($any($event.target).value)"
+            required
+          />
+        </div>
+
+        <!-- Campo Password -->
+        <div class="space-y-2">
+          <app-label for="password" className="flex items-center gap-2">
+            <lucide-icon [img]="Lock" [size]="16"></lucide-icon>
+            Contraseña
+          </app-label>
+          
+          <div class="relative">
+            <app-input
+              id="password"
+              [type]="showPassword() ? 'text' : 'password'"
+              placeholder="••••••••"
+              [value]="password()"
+              (input)="password.set($any($event.target).value)"
+              required
+            />
+            
+            <!-- Botón para mostrar/ocultar contraseña -->
+            <button
+              type="button"
+              (click)="showPassword.set(!showPassword())"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              @if (showPassword()) {
+                <lucide-icon [img]="EyeOff" [size]="18"></lucide-icon>
+              } @else {
+                <lucide-icon [img]="Eye" [size]="18"></lucide-icon>
+              }
+            </button>
+          </div>
+        </div>
+      </app-card-content>
+
+      <!-- Footer del Card -->
+      <app-card-footer className="flex-col gap-4">
+        <!-- Botón Submit -->
+        <app-button type="submit" className="w-full">
+          Iniciar Sesión
+        </app-button>
+        
+        <!-- Link a Registro -->
+        <p class="text-center text-sm text-gray-600">
+          ¿No tienes cuenta?
+          <button 
+            type="button"
+            (click)="navigateToRegister()"
+            class="text-red-600 hover:text-red-700 font-medium ml-1 transition-colors"
+          >
+            Regístrate aquí
+          </button>
+        </p>
+      </app-card-footer>
+    </form>
+  </app-card>
+</div>
