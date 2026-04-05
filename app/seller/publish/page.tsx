@@ -1,0 +1,382 @@
+'use client';
+
+import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { Upload, X, ArrowLeft } from 'lucide-react';
+import { useUser } from '@/contexts/UserContext';
+import { brands, categories, modelsByBrand } from '@/lib/data';
+import { formatPrice } from '@/lib/utils';
+import { lotusSuccess } from '@/lib/swal';
+
+interface FormData {
+  name: string;
+  description: string;
+  brand: string;
+  model: string;
+  category: string;
+  condition: 'new' | 'used';
+  price: string;
+  stock: string;
+}
+
+export default function PublishProductPage() {
+  const router = useRouter();
+  const { user, isLoading } = useUser();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [formData, setFormData] = useState<FormData>({
+    name: '',
+    description: '',
+    brand: '',
+    model: '',
+    category: '',
+    condition: 'new',
+    price: '',
+    stock: '',
+  });
+  const [images, setImages] = useState<string[]>([]);
+  const [errors, setErrors] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!isLoading && (!user || (user.role !== 'seller' && user.role !== 'admin'))) {
+      router.push('/login');
+    }
+  }, [user, isLoading, router]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-pulse text-gray-400">Cargando...</div>
+      </div>
+    );
+  }
+
+  if (!user || (user.role !== 'seller' && user.role !== 'admin')) return null;
+
+  const updateField = (field: keyof FormData, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+      // Reset model when brand changes (HU-008)
+      ...(field === 'brand' ? { model: '' } : {}),
+    }));
+    setErrors([]);
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newImages = Array.from(e.target.files).map((file) => URL.createObjectURL(file));
+      setImages((prev) => [...prev, ...newImages].slice(0, 5));
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const validationErrors: string[] = [];
+
+    if (!formData.name) validationErrors.push('El nombre es obligatorio');
+    if (!formData.description) validationErrors.push('La descripción es obligatoria');
+    if (!formData.brand) validationErrors.push('La marca es obligatoria');
+    if (!formData.model) validationErrors.push('El modelo es obligatorio');
+    if (!formData.category) validationErrors.push('La categoría es obligatoria');
+    if (!formData.price || parseFloat(formData.price) <= 0)
+      validationErrors.push('El precio debe ser mayor a 0');
+    if (!formData.stock || parseInt(formData.stock) <= 0)
+      validationErrors.push('El stock debe ser mayor a 0');
+    if (images.length === 0) validationErrors.push('Debes agregar al menos 1 fotografía');
+
+    if (validationErrors.length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
+    // En producción llamar a /api/products (POST)
+    await lotusSuccess('¡Pieza publicada!', 'Tu producto ya está visible en el catálogo.');
+    router.push('/seller/dashboard');
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-4xl">
+        <button
+          onClick={() => router.push('/seller/dashboard')}
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 rounded transition mb-4"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Volver al inventario
+        </button>
+
+        <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">Publicar Nueva Pieza</h1>
+
+        <form onSubmit={handleSubmit}>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+            {/* Main Form */}
+            <div className="lg:col-span-2 space-y-4 sm:space-y-6">
+              {/* Errors */}
+              {errors.length > 0 && (
+                <div className="bg-red-50 border border-red-300 text-red-800 px-4 py-4 rounded-xl flex gap-3">
+                  <span className="text-red-500 mt-0.5 flex-shrink-0 text-lg">⚠</span>
+                  <div>
+                    <p className="font-semibold text-sm mb-1">Corrige los siguientes errores:</p>
+                    <ul className="list-disc list-inside space-y-0.5">
+                      {errors.map((err, i) => (
+                        <li key={i} className="text-sm">
+                          {err}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+
+              {/* Image Upload */}
+              <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+                <h2 className="text-lg font-semibold mb-3">Fotografías</h2>
+                <p className="text-sm text-gray-500 mb-4">
+                  Mínimo 1, máximo 5 fotografías. La primera será la imagen principal.
+                </p>
+                <div className="grid grid-cols-5 gap-2 sm:gap-3">
+                  {images.map((img, i) => (
+                    <div key={i} className="relative aspect-square">
+                      <img src={img} alt={`Foto ${i + 1}`} className="w-full h-full object-cover rounded-lg" />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(i)}
+                        className="absolute -top-2 -right-2 h-6 w-6 bg-red-600 text-white rounded-full flex items-center justify-center hover:bg-red-700"
+                        aria-label="Eliminar imagen"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+
+                  {images.length < 5 && (
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="aspect-square border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center hover:border-red-400 hover:bg-red-50 transition"
+                    >
+                      <Upload className="h-5 w-5 text-gray-400" />
+                      <span className="text-xs text-gray-400 mt-1">Agregar</span>
+                    </button>
+                  )}
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+              </div>
+
+              {/* Product Info */}
+              <div className="bg-white rounded-lg shadow p-4 sm:p-6 space-y-4">
+                <h2 className="text-lg font-semibold">Información del Producto</h2>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Nombre de la Pieza *</label>
+                  <input
+                    type="text"
+                    placeholder="Ej: Motor V8 BMW M5"
+                    value={formData.name}
+                    onChange={(e) => updateField('name', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Descripción *</label>
+                  <textarea
+                    rows={5}
+                    placeholder="Describe la pieza en detalle..."
+                    value={formData.description}
+                    onChange={(e) => updateField('description', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Marca *</label>
+                    <select
+                      value={formData.brand}
+                      onChange={(e) => updateField('brand', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                    >
+                      <option value="">Seleccionar marca</option>
+                      {brands.map((b) => (
+                        <option key={b} value={b}>
+                          {b}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Modelo Compatible *</label>
+                    <select
+                      value={formData.model}
+                      onChange={(e) => updateField('model', e.target.value)}
+                      disabled={!formData.brand}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    >
+                      <option value="">
+                        {formData.brand ? 'Seleccionar modelo' : 'Primero elige una marca'}
+                      </option>
+                      {(modelsByBrand[formData.brand] ?? []).map((m) => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Categoría *</label>
+                  <select
+                    value={formData.category}
+                    onChange={(e) => updateField('category', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                  >
+                    <option value="">Seleccionar categoría</option>
+                    {categories.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Estado de la Pieza *</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div
+                      className={`flex items-center gap-3 border rounded-lg p-3 cursor-pointer hover:bg-gray-50 ${
+                        formData.condition === 'new' ? 'border-red-600 bg-red-50' : 'border-gray-200'
+                      }`}
+                      onClick={() => updateField('condition', 'new')}
+                    >
+                      <input
+                        type="radio"
+                        name="condition"
+                        value="new"
+                        checked={formData.condition === 'new'}
+                        onChange={() => updateField('condition', 'new')}
+                        className="text-red-600"
+                      />
+                      <div>
+                        <p className="text-sm font-medium">Nuevo</p>
+                        <p className="text-xs text-gray-500">Sin usar, en su empaque original</p>
+                      </div>
+                    </div>
+                    <div
+                      className={`flex items-center gap-3 border rounded-lg p-3 cursor-pointer hover:bg-gray-50 ${
+                        formData.condition === 'used' ? 'border-red-600 bg-red-50' : 'border-gray-200'
+                      }`}
+                      onClick={() => updateField('condition', 'used')}
+                    >
+                      <input
+                        type="radio"
+                        name="condition"
+                        value="used"
+                        checked={formData.condition === 'used'}
+                        onChange={() => updateField('condition', 'used')}
+                        className="text-red-600"
+                      />
+                      <div>
+                        <p className="text-sm font-medium">Usado</p>
+                        <p className="text-xs text-gray-500">Previamente instalado</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Precio (COP) *</label>
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="15000000"
+                      value={formData.price}
+                      onChange={(e) => updateField('price', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Cantidad Disponible *</label>
+                    <input
+                      type="number"
+                      min="1"
+                      placeholder="1"
+                      value={formData.stock}
+                      onChange={(e) => updateField('stock', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Submit Buttons */}
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => router.push('/seller/dashboard')}
+                  className="flex-1 border border-gray-300 rounded-md py-3 text-sm hover:bg-gray-50 font-medium"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-md py-3 text-sm font-medium"
+                >
+                  Publicar Pieza
+                </button>
+              </div>
+            </div>
+
+            {/* Preview */}
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-lg shadow p-4 sm:p-6 lg:sticky lg:top-20">
+                <h2 className="text-lg font-semibold mb-4">Vista Previa</h2>
+                <div className="border border-gray-200 rounded-lg overflow-hidden">
+                  <div className="aspect-square bg-gray-100 flex items-center justify-center">
+                    {images[0] ? (
+                      <img
+                        src={images[0]}
+                        alt="Vista previa"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="text-center text-gray-400">
+                        <Upload className="h-12 w-12 mx-auto mb-2" />
+                        <p className="text-sm">Sin imagen</p>
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-3">
+                    <p className="font-medium text-sm line-clamp-1">
+                      {formData.name || 'Nombre del producto'}
+                    </p>
+                    <p className="text-xs text-gray-500 mb-2">
+                      {formData.brand || 'Marca'} • {formData.model || 'Modelo'}
+                    </p>
+                    <p className="text-red-600 font-bold">
+                      {formData.price ? formatPrice(parseFloat(formData.price)) : '$0'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
