@@ -4,7 +4,6 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Mail, CheckCircle2, Send } from 'lucide-react';
 import { generateResetToken, saveResetToken } from '@/lib/utils';
-import { mockRegisteredEmails } from '@/lib/data';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');

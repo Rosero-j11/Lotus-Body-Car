@@ -14,6 +14,7 @@ import { mockProductDetails, mockProducts } from '@/lib/data';
 import type { ProductDetail } from '@/lib/types';
 import { formatPrice } from '@/lib/utils';
 import { toastSuccess } from '@/lib/swal';
+import Image from 'next/image';
 
 interface ProductDetailPageProps {
   params: Promise<{ id: string }>;
@@ -67,14 +68,15 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   // Teclado para el zoom modal
   useEffect(() => {
     if (!isZoomed) return;
+    const total = product.images.length;
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setIsZoomed(false);
-      if (e.key === 'ArrowLeft') prevImage();
-      if (e.key === 'ArrowRight') nextImage();
+      if (e.key === 'ArrowLeft') setActiveImg((i) => (i - 1 + total) % total);
+      if (e.key === 'ArrowRight') setActiveImg((i) => (i + 1) % total);
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [isZoomed, activeImg, product.images.length]);
+  }, [isZoomed, product.images.length]);
 
   const handleAddToCart = () => {
     addItem({
@@ -120,12 +122,14 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
           {/* Carrusel de imágenes (HU-015) */}
           <div>
             <div className="relative overflow-hidden mb-3 bg-white rounded-lg shadow group">
-              <div className="aspect-square bg-gray-100 cursor-zoom-in" onClick={() => setIsZoomed(true)}>
-                <img
+              <div className="aspect-square relative bg-gray-100 cursor-zoom-in" onClick={() => setIsZoomed(true)}>
+                <Image
                   src={product.images[activeImg]}
                   alt={product.name}
-                  className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-                  onError={(e) => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22400%22%3E%3Crect fill=%22%23f3f4f6%22 width=%22400%22 height=%22400%22/%3E%3C/svg%3E'; }}
+                  fill
+                  className="object-cover transition-transform duration-300 hover:scale-105"
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  priority
                 />
                 {/* Zoom hint overlay */}
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition bg-black/10">
@@ -167,8 +171,8 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
               <div className="flex gap-2 overflow-x-auto pb-1">
                 {product.images.map((img: string, i: number) => (
                   <button key={i} onClick={() => setActiveImg(i)}
-                    className={`flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden border-2 transition ${i === activeImg ? 'border-red-600' : 'border-transparent hover:border-gray-300'}`}>
-                    <img src={img} alt={`${product.name} ${i + 1}`} className="w-full h-full object-cover" />
+                      className={`flex-shrink-0 relative w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden border-2 transition ${i === activeImg ? 'border-red-600' : 'border-transparent hover:border-gray-300'}`}>
+                      <Image src={img} alt={`${product.name} ${i + 1}`} fill className="object-cover" sizes="80px" />
                   </button>
                 ))}
               </div>
@@ -332,6 +336,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
             </>
           )}
 
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={product.images[activeImg]}
             alt={product.name}

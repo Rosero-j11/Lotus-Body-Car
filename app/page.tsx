@@ -1,7 +1,8 @@
 ﻿'use client';
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Image from 'next/image';
 import { Search, Filter, X, SlidersHorizontal, RotateCcw } from 'lucide-react';
 import { mockProducts, brands, categories, modelsByBrand } from '@/lib/data';
 import { formatPrice, debounce } from '@/lib/utils';
@@ -35,12 +36,8 @@ function HomeContent() {
       ? selectedBrands.flatMap((b) => modelsByBrand[b] ?? [])
       : [];
 
-  // Debounce del input de búsqueda (HU-011)
-  const debouncedSetQuery = useCallback(
-    debounce((val: string) => setDebouncedQuery(val), 300),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
+  // Debounce del input de búsqueda (HU-011) — useRef para función estable sin warnings de hooks
+  const debouncedSetQuery = useRef(debounce((val: string) => setDebouncedQuery(val), 300)).current;
 
   const handleSearchChange = (val: string) => {
     setSearchQuery(val);
@@ -57,9 +54,8 @@ function HomeContent() {
     if (selectedCategories.length) params.set('cat', selectedCategories.join(','));
     if (selectedConditions.length) params.set('cond', selectedConditions.join(','));
     const qs = params.toString();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     router.replace(qs ? `/?${qs}` : '/', { scroll: false });
-  }, [debouncedQuery, sortBy, selectedBrands, selectedModel, selectedCategories, selectedConditions]);
+  }, [debouncedQuery, sortBy, selectedBrands, selectedModel, selectedCategories, selectedConditions, router]);
 
   const toggleBrand = (brand: string) => {
     setSelectedBrands((prev) => {
@@ -304,12 +300,13 @@ function HomeContent() {
                   <div key={product.id} onClick={() => router.push(`/products/${product.id}`)}
                     className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group">
                     <div className="aspect-square relative overflow-hidden bg-gray-100">
-                      <img src={product.image} alt={product.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src =
-                            'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22400%22%3E%3Crect fill=%22%23f3f4f6%22 width=%22400%22 height=%22400%22/%3E%3C/svg%3E';
-                        }} />
+                      <Image
+                        src={product.image}
+                        alt={product.name}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                      />
                       <span className="absolute top-2 right-2 bg-red-600 text-white text-xs px-2 py-0.5 rounded">
                         {product.condition}
                       </span>

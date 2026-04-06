@@ -11,6 +11,7 @@ import { useUser } from '@/contexts/UserContext';
 import { mockSellerProducts } from '@/lib/data';
 import { formatPrice, formatDate } from '@/lib/utils';
 import { lotusWarning, lotusConfirmDanger, toastSuccess } from '@/lib/swal';
+import Image from 'next/image';
 import { SellerProduct, ProductHistory } from '@/lib/types';
 
 const ITEMS_PER_PAGE = 6;
@@ -246,8 +247,8 @@ export default function SellerDashboardPage() {
                     <tr key={product.id} className="hover:bg-gray-50">
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                            <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                          <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                            <Image src={product.image} alt={product.name} fill className="object-cover" sizes="48px" />
                           </div>
                           <div>
                             <p className="text-sm font-medium">{product.name}</p>
@@ -304,8 +305,8 @@ export default function SellerDashboardPage() {
               {paginated.map((product) => (
                 <div key={product.id} className="bg-white rounded-lg shadow p-4">
                   <div className="flex gap-3 mb-3">
-                    <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                      <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                    <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                      <Image src={product.image} alt={product.name} fill className="object-cover" sizes="64px" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium line-clamp-1">{product.name}</p>

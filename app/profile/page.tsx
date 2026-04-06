@@ -4,8 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { User, Mail, Phone, MapPin, Camera, Save, LogOut, Trash2, Eye, EyeOff, AlertTriangle } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
-import { validatePassword } from '@/lib/utils';
-import { toastSuccess, lotusConfirmDanger, lotusWarning } from '@/lib/swal';
+import { toastSuccess, lotusConfirmDanger } from '@/lib/swal';
 
 interface FieldErrors {
   name?: string;
@@ -136,6 +135,7 @@ export default function ProfilePage() {
             <div className="relative">
               <div className="w-20 h-20 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center overflow-hidden">
                 {avatarPreview ? (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-white text-3xl font-bold">{user.name.charAt(0).toUpperCase()}</span>

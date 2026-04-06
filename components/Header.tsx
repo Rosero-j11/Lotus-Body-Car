@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { ShoppingCart, LayoutDashboard, Plus, Settings, LogOut, UserCircle, Search, X, Clock, ChevronDown } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { useCart } from '@/contexts/CartContext';

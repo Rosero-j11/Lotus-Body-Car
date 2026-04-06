@@ -13,7 +13,6 @@ import {
   Shield,
   UserCheck,
   UserX,
-  ChevronDown,
 } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { adminStats, mockPlatformUsers } from '@/lib/data';

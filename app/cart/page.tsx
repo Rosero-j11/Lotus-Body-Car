@@ -7,7 +7,8 @@ import { ArrowLeft, Trash2, Minus, Plus } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { useCart } from '@/contexts/CartContext';
 import { formatPrice } from '@/lib/utils';
-import { lotusConfirmDanger, toastSuccess, toastInfo } from '@/lib/swal';
+import { lotusConfirmDanger, toastInfo } from '@/lib/swal';
+import Image from 'next/image';
 
 export default function CartPage() {
   const router = useRouter();
@@ -108,11 +109,13 @@ export default function CartPage() {
                         key={item.id}
                         className="flex flex-col sm:flex-row gap-3 sm:gap-4 pb-3 sm:pb-4 border-b last:border-0"
                       >
-                        <div className="w-full sm:w-20 h-40 sm:h-20 lg:w-24 lg:h-24 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                          <img
+                        <div className="relative w-full sm:w-20 h-40 sm:h-20 lg:w-24 lg:h-24 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                          <Image
                             src={item.image}
                             alt={item.name}
-                            className="w-full h-full object-cover"
+                            fill
+                            className="object-cover"
+                            sizes="96px"
                           />
                         </div>
 

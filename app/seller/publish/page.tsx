@@ -142,6 +142,7 @@ export default function PublishProductPage() {
                 <div className="grid grid-cols-5 gap-2 sm:gap-3">
                   {images.map((img, i) => (
                     <div key={i} className="relative aspect-square">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={img} alt={`Foto ${i + 1}`} className="w-full h-full object-cover rounded-lg" />
                       <button
                         type="button"
@@ -348,6 +349,7 @@ export default function PublishProductPage() {
                 <div className="border border-gray-200 rounded-lg overflow-hidden">
                   <div className="aspect-square bg-gray-100 flex items-center justify-center">
                     {images[0] ? (
+                      // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={images[0]}
                         alt="Vista previa"
