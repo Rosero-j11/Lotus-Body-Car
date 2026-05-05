@@ -15,13 +15,43 @@ import {
 import { mockOrderData } from '@/lib/data';
 import { formatPrice, formatDateLong } from '@/lib/utils';
 import { toastInfo } from '@/lib/swal';
+import type { CartItem } from '@/lib/types';
+
+const mockCartItemsForConfirmation: CartItem[] = [
+  {
+    id: '1',
+    name: 'Motor V8 BMW M5',
+    brand: 'BMW',
+    model: 'M5 F90',
+    price: 15000000,
+    quantity: 1,
+    stock: 3,
+    image: '',
+  },
+  {
+    id: '2',
+    name: 'Rines Deportivos AMG 20"',
+    brand: 'Mercedes-Benz',
+    model: 'AMG GT',
+    price: 8500000,
+    quantity: 1,
+    stock: 5,
+    image: '',
+  },
+];
 
 export default function PaymentConfirmationPage() {
   const router = useRouter();
-  const success = true; // En producción obtener de query params o estado global
+  const success = true;
   const order = {
     ...mockOrderData,
     date: formatDateLong(new Date()),
+    orderNumber: mockOrderData.numero_pedido,
+    paymentMethod: 'Tarjeta de Crédito (Visa **** 4242)',
+    shippingAddress: mockOrderData.direccion_entrega,
+    transactionId: mockOrderData.id_transaccion,
+    iva: mockOrderData.impuestos_iva,
+    items: mockCartItemsForConfirmation,
   };
 
   return (

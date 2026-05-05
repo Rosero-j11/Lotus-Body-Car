@@ -56,7 +56,20 @@ export function getLoginAttempts(): LoginAttempts {
   if (typeof window === 'undefined') return { count: 0, lastAttempt: 0 };
   try {
     const raw = localStorage.getItem(ATTEMPTS_KEY);
-    return raw ? JSON.parse(raw) : { count: 0, lastAttempt: 0 };
+    if (!raw) return { count: 0, lastAttempt: 0 };
+    
+    const parsed = JSON.parse(raw) as LoginAttempts;
+    
+    // Si ya pasó el tiempo de bloqueo, o pasó mucho tiempo desde el último intento (15 min), se resetea
+    if (
+      (parsed.blockedUntil && Date.now() > parsed.blockedUntil) ||
+      (Date.now() - parsed.lastAttempt > BLOCK_DURATION)
+    ) {
+      localStorage.removeItem(ATTEMPTS_KEY);
+      return { count: 0, lastAttempt: 0 };
+    }
+    
+    return parsed;
   } catch {
     return { count: 0, lastAttempt: 0 };
   }

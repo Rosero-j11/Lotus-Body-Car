@@ -14,7 +14,8 @@ interface FormData {
   brand: string;
   model: string;
   category: string;
-  condition: 'new' | 'used';
+  condition: 'new' | 'used' | 'reconditioned';
+  year: string;
   price: string;
   stock: string;
 }
@@ -31,6 +32,7 @@ export default function PublishProductPage() {
     model: '',
     category: '',
     condition: 'new',
+    year: '',
     price: '',
     stock: '',
   });
@@ -83,6 +85,8 @@ export default function PublishProductPage() {
     if (!formData.brand) validationErrors.push('La marca es obligatoria');
     if (!formData.model) validationErrors.push('El modelo es obligatorio');
     if (!formData.category) validationErrors.push('La categoría es obligatoria');
+    if (!formData.year || parseInt(formData.year) < 1900 || parseInt(formData.year) > new Date().getFullYear() + 1)
+      validationErrors.push('El año debe ser válido (1900-' + (new Date().getFullYear() + 1) + ')');
     if (!formData.price || parseFloat(formData.price) <= 0)
       validationErrors.push('El precio debe ser mayor a 0');
     if (!formData.stock || parseInt(formData.stock) <= 0)
@@ -94,9 +98,36 @@ export default function PublishProductPage() {
       return;
     }
 
-    // En producción llamar a /api/products (POST)
-    await lotusSuccess('¡Pieza publicada!', 'Tu producto ya está visible en el catálogo.');
-    router.push('/seller/dashboard');
+    try {
+      const response = await fetch('/api/products', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nombre: formData.name,
+          descripcion: formData.description,
+          marca: formData.brand,
+          modelo: formData.model,
+          categoria: formData.category,
+          anio: parseInt(formData.year),
+          condicion_pieza: formData.condition === 'new' ? 'Nuevo' : formData.condition === 'reconditioned' ? 'Reacondicionado' : 'Usado',
+          precio: parseFloat(formData.price),
+          stock: parseInt(formData.stock),
+          imagenes: images.length > 0 ? images : ['https://images.unsplash.com/photo-1486496146582-9ffcd0b2b2b7?w=800'],
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al publicar la pieza');
+      }
+
+      await lotusSuccess('¡Pieza publicada!', 'Tu producto ya está visible en el catálogo.');
+      router.push('/seller/dashboard');
+    } catch (err: unknown) {
+      setErrors([err instanceof Error ? err.message : 'Error al publicar la pieza']);
+    }
   };
 
   return (
@@ -255,7 +286,7 @@ export default function PublishProductPage() {
 
                 <div>
                   <label className="block text-sm font-medium mb-2">Estado de la Pieza *</label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div
                       className={`flex items-center gap-3 border rounded-lg p-3 cursor-pointer hover:bg-gray-50 ${
                         formData.condition === 'new' ? 'border-red-600 bg-red-50' : 'border-gray-200'
@@ -294,10 +325,43 @@ export default function PublishProductPage() {
                         <p className="text-xs text-gray-500">Previamente instalado</p>
                       </div>
                     </div>
+                    <div
+                      className={`flex items-center gap-3 border rounded-lg p-3 cursor-pointer hover:bg-gray-50 ${
+                        formData.condition === 'reconditioned' ? 'border-red-600 bg-red-50' : 'border-gray-200'
+                      }`}
+                      onClick={() => updateField('condition', 'reconditioned')}
+                    >
+                      <input
+                        type="radio"
+                        name="condition"
+                        value="reconditioned"
+                        checked={formData.condition === 'reconditioned'}
+                        onChange={() => updateField('condition', 'reconditioned')}
+                        className="text-red-600"
+                      />
+                      <div>
+                        <p className="text-sm font-medium">Reacondicionado</p>
+                        <p className="text-xs text-gray-500">Restaurado y verificado</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Año *</label>
+                    <select
+                      value={formData.year}
+                      onChange={(e) => updateField('year', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                    >
+                      <option value="">Seleccionar año</option>
+                      {Array.from({ length: 30 }, (_, i) => new Date().getFullYear() - i).map((y) => (
+                        <option key={y} value={y}>{y}</option>
+                      ))}
+                    </select>
+                  </div>
+
                   <div>
                     <label className="block text-sm font-medium mb-1">Precio (COP) *</label>
                     <input

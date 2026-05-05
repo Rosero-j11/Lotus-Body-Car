@@ -23,10 +23,31 @@ import {
 } from "lucide-react";
 import { useUser } from "@/contexts/UserContext";
 import { useCart } from "@/contexts/CartContext";
-import { mockProductDetails, mockProducts } from "@/lib/data";
 import { formatPrice } from "@/lib/utils";
 import { toastSuccess } from "@/lib/swal";
 import Image from "next/image";
+
+interface ProductDetail {
+  id: string;
+  name: string;
+  brand: string;
+  model: string;
+  price: number;
+  condition: string;
+  description: string;
+  images: string[];
+  sellerInfo: {
+    name: string;
+    rating: number;
+    reviews: number;
+    verified: boolean;
+  };
+  location: string;
+  category: string;
+  stock: number;
+  specifications: Record<string, string>;
+  status: string;
+}
 
 interface ProductDetailPageProps {
   params: Promise<{ id: string }>;
@@ -44,47 +65,83 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   const [quantity, setQuantity] = useState(1);
   const [viewCount, setViewCount] = useState(0);
 
-  // Resolver producto: buscar por id real, o fallback a '1'
-  const detail = mockProductDetails[id] ?? mockProductDetails["1"];
-  const base = mockProducts.find((p) => p.id === id) ?? mockProducts[0];
+  const [product, setProduct] = useState<ProductDetail | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const product = {
-    id: detail?.id_producto ?? base.id,
-    name: base.nombre,
-    brand: base.marca,
-    model: base.modelo,
-    price: base.precio,
-    condition: base.condicion_pieza,
-    description: detail?.descripcion ?? "Sin descripción disponible.",
-    images: detail?.imagenes ?? [
-      "https://images.unsplash.com/photo-1762139258224-236877b2c571?w=500",
-    ],
-    sellerInfo: { name: "Vendedor", rating: 4.5, reviews: 12, verified: true },
-    location: "Colombia",
-    category: base.categoria,
-    stock: base.stock ?? 1,
-    specifications: (detail?.especificaciones ?? {}) as Record<string, string>,
-    status: base.estado_publicacion ?? "active",
-  };
+  useEffect(() => {
+    async function fetchProduct() {
+      try {
+        const res = await fetch(`/api/products/${id}`);
+        const data = await res.json();
+
+        if (data.product) {
+          const dbProd = data.product;
+          const rawDetail = dbProd.detalle_producto;
+          const detail = Array.isArray(rawDetail) ? rawDetail[0] : rawDetail;
+          const seller = dbProd.usuario;
+
+          setProduct({
+            id: dbProd.id,
+            name: dbProd.nombre,
+            brand: dbProd.marca,
+            model: dbProd.modelo,
+            price: dbProd.precio,
+            condition: dbProd.condicion_pieza,
+            description: detail?.descripcion ?? "Sin descripción disponible.",
+            images: detail?.imagenes?.length
+              ? detail.imagenes
+              : [
+                  "https://images.unsplash.com/photo-1762139258224-236877b2c571?w=500",
+                ],
+            sellerInfo: {
+              name: seller?.nombre ?? "Vendedor Anónimo",
+              rating: seller?.reputacion ?? 4.5,
+              reviews: 12,
+              verified: seller?.verificado ?? false,
+            },
+            location: seller?.direccion ?? "Colombia",
+            category: dbProd.categoria,
+            stock: dbProd.stock ?? 1,
+            specifications: (detail?.especificaciones ?? {}) as Record<
+              string,
+              string
+            >,
+            status: dbProd.estado_publicacion ?? "active",
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching product:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchProduct();
+  }, [id]);
 
   // Contador de vistas (HU-015)
   useEffect(() => {
+    if (!product) return;
     const key = `lotus_views_${product.id}`;
     const prev = parseInt(localStorage.getItem(key) ?? "0", 10);
     const next = prev + 1;
     localStorage.setItem(key, String(next));
     setViewCount(next);
-  }, [product.id]);
+  }, [product?.id]);
 
-  const prevImage = () =>
+  const prevImage = () => {
+    if (!product) return;
     setActiveImg(
       (i) => (i - 1 + product.images.length) % product.images.length,
     );
-  const nextImage = () => setActiveImg((i) => (i + 1) % product.images.length);
+  };
+  const nextImage = () => {
+    if (!product) return;
+    setActiveImg((i) => (i + 1) % product.images.length);
+  };
 
   // Teclado para el zoom modal
   useEffect(() => {
-    if (!isZoomed) return;
+    if (!isZoomed || !product) return;
     const total = product.images.length;
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") setIsZoomed(false);
@@ -93,7 +150,23 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [isZoomed, product.images.length]);
+  }, [isZoomed, product?.images?.length]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        Cargando producto...
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        Producto no encontrado.
+      </div>
+    );
+  }
 
   const handleAddToCart = () => {
     addItem({
@@ -398,7 +471,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                             {key}
                           </dt>
                           <dd className="text-xs sm:text-sm sm:text-right">
-                            {value}
+                            {String(value)}
                           </dd>
                         </div>
                       ),

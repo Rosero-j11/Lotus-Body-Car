@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   DollarSign,
   FileText,
@@ -13,44 +13,47 @@ import {
   Shield,
   UserCheck,
   UserX,
-} from 'lucide-react';
-import { useUser } from '@/contexts/UserContext';
-import { adminStats, mockPlatformUsers } from '@/lib/data';
-import { formatPrice, formatDate } from '@/lib/utils';
-import { toastInfo } from '@/lib/swal';
+} from "lucide-react";
+import { useUser } from "@/contexts/UserContext";
+import { adminStats, mockPlatformUsers } from "@/lib/data";
+import { formatPrice, formatDate } from "@/lib/utils";
+import { toastInfo } from "@/lib/swal";
 
-type Tab = 'reports' | 'sales' | 'products' | 'orders' | 'users';
+type Tab = "reports" | "sales" | "products" | "orders" | "users";
 
 export default function AdminDashboardPage() {
   const router = useRouter();
   const { user, isLoading } = useUser();
-  const [activeTab, setActiveTab] = useState<Tab>('reports');
+  const [activeTab, setActiveTab] = useState<Tab>("reports");
   const [platformUsers, setPlatformUsers] = useState(mockPlatformUsers);
-  const [userSearch, setUserSearch] = useState('');
-  const [reportType, setReportType] = useState('sales');
-  const [reportFormat, setReportFormat] = useState('pdf');
-  const [reportPeriod, setReportPeriod] = useState('monthly');
+  const [userSearch, setUserSearch] = useState("");
+  const [reportType, setReportType] = useState("sales");
+  const [reportFormat, setReportFormat] = useState("pdf");
+  const [reportPeriod, setReportPeriod] = useState("monthly");
 
   const handleRoleChange = (userId: string, newRole: string) => {
     setPlatformUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, rol: newRole } : u))
+      prev.map((u) => (u.id === userId ? { ...u, rol: newRole } : u)),
     );
   };
 
   const handleToggleActive = (userId: string) => {
     setPlatformUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, verificado: !u.verificado } : u))
+      prev.map((u) =>
+        u.id === userId ? { ...u, verificado: !u.verificado } : u,
+      ),
     );
   };
 
-  const filteredUsers = platformUsers.filter((u) =>
-    u.nombre.toLowerCase().includes(userSearch.toLowerCase()) ||
-    u.correo.toLowerCase().includes(userSearch.toLowerCase())
+  const filteredUsers = platformUsers.filter(
+    (u) =>
+      u.nombre.toLowerCase().includes(userSearch.toLowerCase()) ||
+      u.correo.toLowerCase().includes(userSearch.toLowerCase()),
   );
 
   useEffect(() => {
-    if (!isLoading && (!user || user.rol !== 'admin')) {
-      router.push('/login');
+    if (!isLoading && (!user || user.role !== "admin")) {
+      router.push("/login");
     }
   }, [user, isLoading, router]);
 
@@ -62,22 +65,22 @@ export default function AdminDashboardPage() {
     );
   }
 
-  if (!user || user.rol !== 'admin') return null;
+  if (!user || user.role !== "admin") return null;
 
   const maxSales = Math.max(...adminStats.monthlySales.map((s) => s.sales));
 
   const statusConfig: Record<string, string> = {
-    Pagado: 'bg-green-100 text-green-700',
-    Pendiente: 'bg-yellow-100 text-yellow-700',
-    Enviado: 'bg-blue-100 text-blue-700',
+    Pagado: "bg-green-100 text-green-700",
+    Pendiente: "bg-yellow-100 text-yellow-700",
+    Enviado: "bg-blue-100 text-blue-700",
   };
 
   const tabs = [
-    { id: 'reports' as Tab, label: 'Reportes' },
-    { id: 'sales' as Tab, label: 'Ventas' },
-    { id: 'products' as Tab, label: 'Productos' },
-    { id: 'orders' as Tab, label: 'Pedidos' },
-    { id: 'users' as Tab, label: 'Usuarios' },
+    { id: "reports" as Tab, label: "Reportes" },
+    { id: "sales" as Tab, label: "Ventas" },
+    { id: "products" as Tab, label: "Productos" },
+    { id: "orders" as Tab, label: "Pedidos" },
+    { id: "users" as Tab, label: "Usuarios" },
   ];
 
   return (
@@ -86,11 +89,15 @@ export default function AdminDashboardPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-3">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold">Panel de Administración</h1>
-            <p className="text-sm text-gray-600 mt-1">Gestión y reportes del sistema</p>
+            <h1 className="text-2xl sm:text-3xl font-bold">
+              Panel de Administración
+            </h1>
+            <p className="text-sm text-gray-600 mt-1">
+              Gestión y reportes del sistema
+            </p>
           </div>
           <button
-            onClick={() => router.push('/')}
+            onClick={() => router.push("/")}
             className="text-sm text-gray-600 hover:text-gray-900 border border-gray-300 rounded-md px-4 py-2 hover:bg-gray-50"
           >
             Volver al inicio
@@ -110,7 +117,9 @@ export default function AdminDashboardPage() {
               </div>
             </div>
             <p className="text-xs sm:text-sm text-gray-600">Ventas Totales</p>
-            <p className="text-lg sm:text-2xl font-bold">{formatPrice(adminStats.totalSales)}</p>
+            <p className="text-lg sm:text-2xl font-bold">
+              {formatPrice(adminStats.totalSales)}
+            </p>
           </div>
 
           <div className="bg-white rounded-lg shadow p-4 sm:p-6">
@@ -124,7 +133,9 @@ export default function AdminDashboardPage() {
               </div>
             </div>
             <p className="text-xs sm:text-sm text-gray-600">Pedidos</p>
-            <p className="text-lg sm:text-2xl font-bold">{adminStats.totalOrders}</p>
+            <p className="text-lg sm:text-2xl font-bold">
+              {adminStats.totalOrders}
+            </p>
           </div>
 
           <div className="bg-white rounded-lg shadow p-4 sm:p-6">
@@ -134,7 +145,9 @@ export default function AdminDashboardPage() {
               </div>
             </div>
             <p className="text-xs sm:text-sm text-gray-600">Productos</p>
-            <p className="text-lg sm:text-2xl font-bold">{adminStats.totalProducts}</p>
+            <p className="text-lg sm:text-2xl font-bold">
+              {adminStats.totalProducts}
+            </p>
             <p className="text-xs text-gray-500">activos</p>
           </div>
 
@@ -145,7 +158,9 @@ export default function AdminDashboardPage() {
               </div>
             </div>
             <p className="text-xs sm:text-sm text-gray-600">Usuarios</p>
-            <p className="text-lg sm:text-2xl font-bold">{adminStats.totalUsers}</p>
+            <p className="text-lg sm:text-2xl font-bold">
+              {adminStats.totalUsers}
+            </p>
             <p className="text-xs text-gray-500">registrados</p>
           </div>
         </div>
@@ -161,8 +176,8 @@ export default function AdminDashboardPage() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`py-3 sm:py-4 px-2 sm:px-4 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
                     activeTab === tab.id
-                      ? 'border-red-600 text-red-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                      ? "border-red-600 text-red-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700"
                   }`}
                 >
                   {tab.label}
@@ -173,12 +188,16 @@ export default function AdminDashboardPage() {
 
           <div className="p-4 sm:p-6">
             {/* Reportes Tab */}
-            {activeTab === 'reports' && (
+            {activeTab === "reports" && (
               <div>
-                <h2 className="text-lg font-semibold mb-4">Generador de Reportes</h2>
+                <h2 className="text-lg font-semibold mb-4">
+                  Generador de Reportes
+                </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Tipo de Reporte</label>
+                    <label className="block text-sm font-medium mb-1">
+                      Tipo de Reporte
+                    </label>
                     <select
                       value={reportType}
                       onChange={(e) => setReportType(e.target.value)}
@@ -193,7 +212,9 @@ export default function AdminDashboardPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-1">Período</label>
+                    <label className="block text-sm font-medium mb-1">
+                      Período
+                    </label>
                     <select
                       value={reportPeriod}
                       onChange={(e) => setReportPeriod(e.target.value)}
@@ -208,7 +229,9 @@ export default function AdminDashboardPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-1">Formato</label>
+                    <label className="block text-sm font-medium mb-1">
+                      Formato
+                    </label>
                     <select
                       value={reportFormat}
                       onChange={(e) => setReportFormat(e.target.value)}
@@ -223,7 +246,9 @@ export default function AdminDashboardPage() {
 
                 <button
                   onClick={() =>
-                    toastInfo(`Generando reporte de ${reportType} (${reportPeriod}) en ${reportFormat.toUpperCase()}...`)
+                    toastInfo(
+                      `Generando reporte de ${reportType} (${reportPeriod}) en ${reportFormat.toUpperCase()}...`,
+                    )
                   }
                   className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-md text-sm font-medium"
                 >
@@ -234,18 +259,27 @@ export default function AdminDashboardPage() {
             )}
 
             {/* Ventas Tab */}
-            {activeTab === 'sales' && (
+            {activeTab === "sales" && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-lg font-semibold mb-4">Ventas Mensuales</h2>
+                  <h2 className="text-lg font-semibold mb-4">
+                    Ventas Mensuales
+                  </h2>
                   <div className="space-y-3">
                     {adminStats.monthlySales.map((month) => (
-                      <div key={month.month} className="flex items-center gap-3">
-                        <span className="text-sm font-medium w-8">{month.month}</span>
+                      <div
+                        key={month.month}
+                        className="flex items-center gap-3"
+                      >
+                        <span className="text-sm font-medium w-8">
+                          {month.month}
+                        </span>
                         <div className="flex-1 bg-gray-100 rounded-full h-3">
                           <div
                             className="bg-red-600 h-3 rounded-full transition-all"
-                            style={{ width: `${(month.sales / maxSales) * 100}%` }}
+                            style={{
+                              width: `${(month.sales / maxSales) * 100}%`,
+                            }}
                           />
                         </div>
                         <span className="text-sm text-gray-600 w-28 text-right">
@@ -257,7 +291,9 @@ export default function AdminDashboardPage() {
                 </div>
 
                 <div>
-                  <h2 className="text-lg font-semibold mb-4">Productos Más Vendidos</h2>
+                  <h2 className="text-lg font-semibold mb-4">
+                    Productos Más Vendidos
+                  </h2>
                   <div className="space-y-3">
                     {adminStats.topProducts.map((product, i) => (
                       <div
@@ -268,8 +304,12 @@ export default function AdminDashboardPage() {
                           {i + 1}
                         </span>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium line-clamp-1">{product.name}</p>
-                          <p className="text-xs text-gray-500">{product.sales} unidades vendidas</p>
+                          <p className="text-sm font-medium line-clamp-1">
+                            {product.name}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {product.sales} unidades vendidas
+                          </p>
                         </div>
                         <span className="text-sm font-medium text-green-600">
                           {formatPrice(product.revenue)}
@@ -282,12 +322,16 @@ export default function AdminDashboardPage() {
             )}
 
             {/* Productos Tab */}
-            {activeTab === 'products' && (
+            {activeTab === "products" && (
               <div>
-                <h2 className="text-lg font-semibold mb-4">Análisis de Productos</h2>
+                <h2 className="text-lg font-semibold mb-4">
+                  Análisis de Productos
+                </h2>
                 <div className="grid grid-cols-3 gap-4 mb-6">
                   <div className="bg-gray-50 rounded-lg p-4 text-center">
-                    <p className="text-2xl font-bold">{adminStats.totalProducts}</p>
+                    <p className="text-2xl font-bold">
+                      {adminStats.totalProducts}
+                    </p>
                     <p className="text-sm text-gray-500">Total</p>
                   </div>
                   <div className="bg-green-50 rounded-lg p-4 text-center">
@@ -307,37 +351,59 @@ export default function AdminDashboardPage() {
             )}
 
             {/* Pedidos Tab */}
-            {activeTab === 'orders' && (
+            {activeTab === "orders" && (
               <div>
-                <h2 className="text-lg font-semibold mb-4">Pedidos Recientes</h2>
+                <h2 className="text-lg font-semibold mb-4">
+                  Pedidos Recientes
+                </h2>
                 {/* Desktop Table */}
                 <div className="hidden sm:block overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b">
-                        <th className="text-left py-2 px-4 font-medium text-gray-500">ID</th>
-                        <th className="text-left py-2 px-4 font-medium text-gray-500">Cliente</th>
-                        <th className="text-left py-2 px-4 font-medium text-gray-500">Producto</th>
-                        <th className="text-left py-2 px-4 font-medium text-gray-500">Monto</th>
-                        <th className="text-left py-2 px-4 font-medium text-gray-500">Estado</th>
-                        <th className="text-left py-2 px-4 font-medium text-gray-500">Fecha</th>
+                        <th className="text-left py-2 px-4 font-medium text-gray-500">
+                          ID
+                        </th>
+                        <th className="text-left py-2 px-4 font-medium text-gray-500">
+                          Cliente
+                        </th>
+                        <th className="text-left py-2 px-4 font-medium text-gray-500">
+                          Producto
+                        </th>
+                        <th className="text-left py-2 px-4 font-medium text-gray-500">
+                          Monto
+                        </th>
+                        <th className="text-left py-2 px-4 font-medium text-gray-500">
+                          Estado
+                        </th>
+                        <th className="text-left py-2 px-4 font-medium text-gray-500">
+                          Fecha
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                       {adminStats.recentOrders.map((order) => (
                         <tr key={order.id} className="hover:bg-gray-50">
-                          <td className="py-3 px-4 font-medium text-red-600">{order.id}</td>
+                          <td className="py-3 px-4 font-medium text-red-600">
+                            {order.id}
+                          </td>
                           <td className="py-3 px-4">{order.customer}</td>
-                          <td className="py-3 px-4 text-gray-600">{order.product}</td>
-                          <td className="py-3 px-4 font-medium">{formatPrice(order.amount)}</td>
+                          <td className="py-3 px-4 text-gray-600">
+                            {order.product}
+                          </td>
+                          <td className="py-3 px-4 font-medium">
+                            {formatPrice(order.amount)}
+                          </td>
                           <td className="py-3 px-4">
                             <span
-                              className={`text-xs px-2 py-1 rounded-full ${statusConfig[order.status] || 'bg-gray-100 text-gray-700'}`}
+                              className={`text-xs px-2 py-1 rounded-full ${statusConfig[order.status] || "bg-gray-100 text-gray-700"}`}
                             >
                               {order.status}
                             </span>
                           </td>
-                          <td className="py-3 px-4 text-gray-500">{formatDate(order.date)}</td>
+                          <td className="py-3 px-4 text-gray-500">
+                            {formatDate(order.date)}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -348,18 +414,26 @@ export default function AdminDashboardPage() {
                   {adminStats.recentOrders.map((order) => (
                     <div key={order.id} className="bg-gray-50 rounded-lg p-3">
                       <div className="flex justify-between items-start mb-2">
-                        <span className="text-sm font-medium text-red-600">{order.id}</span>
+                        <span className="text-sm font-medium text-red-600">
+                          {order.id}
+                        </span>
                         <span
-                          className={`text-xs px-2 py-1 rounded-full ${statusConfig[order.status] || 'bg-gray-100 text-gray-700'}`}
+                          className={`text-xs px-2 py-1 rounded-full ${statusConfig[order.status] || "bg-gray-100 text-gray-700"}`}
                         >
                           {order.status}
                         </span>
                       </div>
                       <p className="text-sm">{order.customer}</p>
-                      <p className="text-xs text-gray-500 mb-1">{order.product}</p>
+                      <p className="text-xs text-gray-500 mb-1">
+                        {order.product}
+                      </p>
                       <div className="flex justify-between">
-                        <span className="text-sm font-medium">{formatPrice(order.amount)}</span>
-                        <span className="text-xs text-gray-500">{formatDate(order.date)}</span>
+                        <span className="text-sm font-medium">
+                          {formatPrice(order.amount)}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {formatDate(order.date)}
+                        </span>
                       </div>
                     </div>
                   ))}
@@ -367,7 +441,7 @@ export default function AdminDashboardPage() {
               </div>
             )}
             {/* Usuarios Tab — HU-007 */}
-            {activeTab === 'users' && (
+            {activeTab === "users" && (
               <div>
                 <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between mb-4">
                   <h2 className="text-lg font-semibold">Gestión de Usuarios</h2>
@@ -384,27 +458,44 @@ export default function AdminDashboardPage() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b bg-gray-50">
-                        <th className="text-left py-2 px-3 font-medium text-gray-600">Usuario</th>
-                        <th className="text-left py-2 px-3 font-medium text-gray-600">Rol</th>
-                        <th className="text-left py-2 px-3 font-medium text-gray-600">Estado</th>
-                        <th className="text-left py-2 px-3 font-medium text-gray-600">Registro</th>
-                        <th className="text-left py-2 px-3 font-medium text-gray-600">Acciones</th>
+                        <th className="text-left py-2 px-3 font-medium text-gray-600">
+                          Usuario
+                        </th>
+                        <th className="text-left py-2 px-3 font-medium text-gray-600">
+                          Rol
+                        </th>
+                        <th className="text-left py-2 px-3 font-medium text-gray-600">
+                          Estado
+                        </th>
+                        <th className="text-left py-2 px-3 font-medium text-gray-600">
+                          Registro
+                        </th>
+                        <th className="text-left py-2 px-3 font-medium text-gray-600">
+                          Acciones
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                       {filteredUsers.map((u) => (
-                        <tr key={u.id} className={`hover:bg-gray-50 ${!u.verificado ? 'opacity-50' : ''}`}>
+                        <tr
+                          key={u.id}
+                          className={`hover:bg-gray-50 ${!u.verificado ? "opacity-50" : ""}`}
+                        >
                           <td className="py-3 px-3">
                             <div>
                               <p className="font-medium">{u.nombre}</p>
-                              <p className="text-xs text-gray-500">{u.correo}</p>
+                              <p className="text-xs text-gray-500">
+                                {u.correo}
+                              </p>
                             </div>
                           </td>
                           <td className="py-3 px-3">
                             <div className="relative inline-block">
                               <select
                                 value={u.rol}
-                                onChange={(e) => handleRoleChange(u.id, e.target.value)}
+                                onChange={(e) =>
+                                  handleRoleChange(u.id, e.target.value)
+                                }
                                 disabled={u.id === user?.id} // No puede cambiar su propio rol
                                 className="border border-gray-200 rounded px-2 py-1 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-red-500 disabled:opacity-60"
                               >
@@ -415,8 +506,10 @@ export default function AdminDashboardPage() {
                             </div>
                           </td>
                           <td className="py-3 px-3">
-                            <span className={`text-xs px-2 py-1 rounded-full ${u.verificado ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                              {u.verificado ? 'Activo' : 'Inactivo'}
+                            <span
+                              className={`text-xs px-2 py-1 rounded-full ${u.verificado ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}
+                            >
+                              {u.verificado ? "Activo" : "Inactivo"}
                             </span>
                           </td>
                           <td className="py-3 px-3 text-gray-500 text-xs">-</td>
@@ -424,10 +517,18 @@ export default function AdminDashboardPage() {
                             <button
                               onClick={() => handleToggleActive(u.id)}
                               disabled={u.id === user?.id}
-                              title={u.verificado ? 'Desactivar cuenta' : 'Activar cuenta'}
-                              className={`p-1.5 rounded transition disabled:opacity-40 ${u.verificado ? 'hover:bg-red-50 text-red-600' : 'hover:bg-green-50 text-green-600'}`}
+                              title={
+                                u.verificado
+                                  ? "Desactivar cuenta"
+                                  : "Activar cuenta"
+                              }
+                              className={`p-1.5 rounded transition disabled:opacity-40 ${u.verificado ? "hover:bg-red-50 text-red-600" : "hover:bg-green-50 text-green-600"}`}
                             >
-                              {u.verificado ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
+                              {u.verificado ? (
+                                <UserX className="h-4 w-4" />
+                              ) : (
+                                <UserCheck className="h-4 w-4" />
+                              )}
                             </button>
                           </td>
                         </tr>
@@ -439,21 +540,28 @@ export default function AdminDashboardPage() {
                 {/* Mobile cards */}
                 <div className="sm:hidden space-y-3">
                   {filteredUsers.map((u) => (
-                    <div key={u.id} className={`bg-gray-50 rounded-lg p-3 ${!u.verificado ? 'opacity-60' : ''}`}>
+                    <div
+                      key={u.id}
+                      className={`bg-gray-50 rounded-lg p-3 ${!u.verificado ? "opacity-60" : ""}`}
+                    >
                       <div className="flex justify-between items-start mb-2">
                         <div>
                           <p className="font-medium text-sm">{u.nombre}</p>
                           <p className="text-xs text-gray-500">{u.correo}</p>
                         </div>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${u.verificado ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                          {u.verificado ? 'Activo' : 'Inactivo'}
+                        <span
+                          className={`text-xs px-2 py-0.5 rounded-full ${u.verificado ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}
+                        >
+                          {u.verificado ? "Activo" : "Inactivo"}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 mt-2">
                         <Shield className="h-4 w-4 text-gray-400" />
                         <select
                           value={u.rol}
-                          onChange={(e) => handleRoleChange(u.id, e.target.value)}
+                          onChange={(e) =>
+                            handleRoleChange(u.id, e.target.value)
+                          }
                           disabled={u.id === user?.id}
                           className="border border-gray-200 rounded px-2 py-1 text-xs bg-white flex-1 focus:outline-none disabled:opacity-60"
                         >
@@ -464,9 +572,9 @@ export default function AdminDashboardPage() {
                         <button
                           onClick={() => handleToggleActive(u.id)}
                           disabled={u.id === user?.id}
-                          className={`p-1.5 rounded border text-xs disabled:opacity-40 ${u.verificado ? 'border-red-200 text-red-600' : 'border-green-200 text-green-600'}`}
+                          className={`p-1.5 rounded border text-xs disabled:opacity-40 ${u.verificado ? "border-red-200 text-red-600" : "border-green-200 text-green-600"}`}
                         >
-                          {u.verificado ? 'Desactivar' : 'Activar'}
+                          {u.verificado ? "Desactivar" : "Activar"}
                         </button>
                       </div>
                     </div>
@@ -481,7 +589,8 @@ export default function AdminDashboardPage() {
                 )}
 
                 <p className="text-xs text-gray-400 mt-4">
-                  * Los cambios de rol se aplican de inmediato. No puedes modificar tu propio rol o cuenta.
+                  * Los cambios de rol se aplican de inmediato. No puedes
+                  modificar tu propio rol o cuenta.
                 </p>
               </div>
             )}

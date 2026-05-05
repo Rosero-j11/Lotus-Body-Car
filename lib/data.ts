@@ -2,9 +2,10 @@ import {
   Usuario, 
   Producto, 
   DetalleProducto, 
-  ArticuloCarrito, 
+  CartItem,
   Pedido, 
-  ArticuloPedido 
+  ArticuloPedido,
+  SellerProduct
 } from './types';
 
 export const brands = ['BMW', 'Mercedes-Benz', 'Audi', 'Porsche', 'Ferrari', 'Lamborghini', 'Universal'];
@@ -192,23 +193,56 @@ export const mockProductDetails: Record<string, DetalleProducto> = {
     especificaciones: { Color: 'Negro', Material: 'Alcantara' },
     imagenes: ['https://images.unsplash.com/photo-1741086011537-c935f6f29724?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080'],
   },
+  '4': {
+    id_producto: '4',
+    descripcion: 'Sistema de escape Akrapovic fabricado en titanio de alta calidad para Porsche 911 GT3. Sonido inigualable y reducción de peso significativa.',
+    especificaciones: { Material: 'Titanio', 'Reducción de peso': '4kg', Sonido: 'Sport' },
+    imagenes: ['https://images.unsplash.com/photo-1617406181730-cbc3e4665411?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080'],
+  },
+  '5': {
+    id_producto: '5',
+    descripcion: 'Turbocompresor Garrett GT3582R para preparaciones de alto rendimiento. Capaz de soportar hasta 700 HP.',
+    especificaciones: { Marca: 'Garrett', Modelo: 'GT3582R', Rango: '400-700 HP' },
+    imagenes: ['https://images.unsplash.com/photo-1614165939020-f71f0683a35c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080'],
+  },
+  '6': {
+    id_producto: '6',
+    descripcion: 'Kit de frenos Brembo Gran Turismo con pinzas de 6 pistones y discos perforados de 380mm.',
+    especificaciones: { Marca: 'Brembo', Pistones: '6', Discos: '380mm' },
+    imagenes: ['https://images.unsplash.com/photo-1603811463131-017e8c3b0a72?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080'],
+  },
 };
 
-export const mockCartItems: ArticuloCarrito[] = [
+export const mockCartItems: CartItem[] = [
   {
-    id_carrito: 'cart1',
-    id_producto: '1',
-    cantidad: 1,
+    id: '1',
+    name: 'Motor V8 BMW M5',
+    brand: 'BMW',
+    model: 'M5 F90',
+    price: 15000000,
+    quantity: 1,
+    stock: 3,
+    image: mockProductDetails['1']?.imagenes?.[0] || '',
   },
   {
-    id_carrito: 'cart1',
-    id_producto: '2',
-    cantidad: 1,
+    id: '2',
+    name: 'Rines Deportivos AMG 20"',
+    brand: 'Mercedes-Benz',
+    model: 'AMG GT',
+    price: 8500000,
+    quantity: 1,
+    stock: 5,
+    image: mockProductDetails['2']?.imagenes?.[0] || '',
   },
   {
-    id_carrito: 'cart1',
-    id_producto: '3',
-    cantidad: 2,
+    id: '3',
+    name: 'Asientos Deportivos Recaro',
+    brand: 'Universal',
+    model: 'Deportivos',
+    price: 4500000,
+    quantity: 2,
+    stock: 8,
+    image: mockProductDetails['3']?.imagenes?.[0] || '',
   },
 ];
 
@@ -244,6 +278,25 @@ export const mockOrderItems: ArticuloPedido[] = [
     cantidad: 2,
   },
 ];
+
+export const mockSellerProducts: SellerProduct[] = mockProducts.map(p => {
+  let status: 'available' | 'reserved' | 'sold' | 'archived' = 'available';
+  if (p.estado_publicacion === 'Reservado') status = 'reserved';
+  else if (p.estado_publicacion === 'Vendida') status = 'sold';
+  
+  return {
+    id: p.id,
+    name: p.nombre,
+    brand: p.marca,
+    model: p.modelo,
+    price: p.precio,
+    condition: p.condicion_pieza,
+    status,
+    stock: p.stock,
+    image: mockProductDetails[p.id]?.imagenes?.[0] || 'https://images.unsplash.com/photo-1762139258224-236877b2c571?w=500',
+    publishDate: p.fecha_fabricacion || new Date().toISOString()
+  };
+});
 
 export const adminStats = {
   totalSales: 125000000,

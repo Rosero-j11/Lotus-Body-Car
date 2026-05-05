@@ -4,10 +4,126 @@ import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Search, Filter, X, SlidersHorizontal, RotateCcw } from "lucide-react";
-import { mockProducts, brands, categories, modelsByBrand, mockPlatformUsers, mockProductDetails } from "@/lib/data";
+import { brands, categories, modelsByBrand } from "@/lib/data";
 import { formatPrice, debounce } from "@/lib/utils";
+import type { Producto } from "@/lib/types";
 
 const conditions = ["Nuevo", "Usado", "Reacondicionado"];
+
+interface ProductWithRelations extends Producto {
+  detalle_producto?: Array<{
+    descripcion: string;
+    especificaciones: Record<string, string>;
+    imagenes: string[];
+  }>;
+  usuario?: { id: string; nombre: string; direccion: string };
+}
+
+interface FilterPanelProps {
+  selectedBrands: string[];
+  selectedModel: string;
+  selectedCategories: string[];
+  selectedConditions: string[];
+  availableModels: string[];
+  toggleBrand: (brand: string) => void;
+  toggleCategory: (cat: string) => void;
+  toggleCondition: (cond: string) => void;
+  setSelectedModel: (model: string) => void;
+}
+
+function FilterPanel({
+  selectedBrands,
+  selectedModel,
+  selectedCategories,
+  selectedConditions,
+  availableModels,
+  toggleBrand,
+  toggleCategory,
+  toggleCondition,
+  setSelectedModel,
+}: FilterPanelProps) {
+  return (
+    <div className="space-y-5">
+      <div>
+        <h5 className="font-semibold text-sm mb-2">Marca</h5>
+        <div className="space-y-1.5">
+          {brands.map((brand) => (
+            <label
+              key={brand}
+              className="flex items-center gap-2 text-sm cursor-pointer hover:text-gray-900"
+            >
+              <input
+                type="checkbox"
+                checked={selectedBrands.includes(brand)}
+                onChange={() => toggleBrand(brand)}
+                className="rounded border-gray-300 text-red-600 focus:ring-red-500 h-3.5 w-3.5"
+              />
+              {brand}
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {availableModels.length > 0 && (
+        <div>
+          <h5 className="font-semibold text-sm mb-2">Modelo</h5>
+          <select
+            value={selectedModel}
+            onChange={(e) => setSelectedModel(e.target.value)}
+            className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+          >
+            <option value="">Todos los modelos</option>
+            {availableModels.map((m) => (
+              <option key={m} value={m}>
+                {m}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      <div>
+        <h5 className="font-semibold text-sm mb-2">Categoría</h5>
+        <div className="space-y-1.5">
+          {categories.map((cat) => (
+            <label
+              key={cat}
+              className="flex items-center gap-2 text-sm cursor-pointer hover:text-gray-900"
+            >
+              <input
+                type="checkbox"
+                checked={selectedCategories.includes(cat)}
+                onChange={() => toggleCategory(cat)}
+                className="rounded border-gray-300 text-red-600 focus:ring-red-500 h-3.5 w-3.5"
+              />
+              {cat}
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <h5 className="font-semibold text-sm mb-2">Estado</h5>
+        <div className="space-y-1.5">
+          {conditions.map((cond) => (
+            <label
+              key={cond}
+              className="flex items-center gap-2 text-sm cursor-pointer hover:text-gray-900"
+            >
+              <input
+                type="checkbox"
+                checked={selectedConditions.includes(cond)}
+                onChange={() => toggleCondition(cond)}
+                className="rounded border-gray-300 text-red-600 focus:ring-red-500 h-3.5 w-3.5"
+              />
+              {cond}
+            </label>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function HomeContent() {
   const router = useRouter();
@@ -135,16 +251,34 @@ function HomeContent() {
       : []),
   ];
 
+  const [products, setProducts] = useState<ProductWithRelations[]>([]);
+
+  // Fetch products from Supabase API
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const res = await fetch("/api/products");
+        const data = await res.json();
+        if (data.products) {
+          setProducts(data.products);
+        }
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      }
+    }
+    fetchProducts();
+  }, []);
+
   // Filtrado y ordenamiento (HU-011, HU-014)
-  const filteredProducts = mockProducts
+  const filteredProducts = products
     .filter((p) => {
       const q = debouncedQuery.toLowerCase();
       const matchesSearch =
         !q ||
-        p.nombre.toLowerCase().includes(q) ||
-        p.marca.toLowerCase().includes(q) ||
-        p.modelo.toLowerCase().includes(q) ||
-        p.categoria.toLowerCase().includes(q);
+        p.nombre?.toLowerCase().includes(q) ||
+        p.marca?.toLowerCase().includes(q) ||
+        p.modelo?.toLowerCase().includes(q) ||
+        p.categoria?.toLowerCase().includes(q);
       const matchesBrand =
         !selectedBrands.length || selectedBrands.includes(p.marca);
       const matchesModel = !selectedModel || p.modelo === selectedModel;
@@ -165,8 +299,12 @@ function HomeContent() {
       if (sortBy === "price-low") return a.precio - b.precio;
       if (sortBy === "price-high") return b.precio - a.precio;
       if (sortBy === "date-new") {
-        const dateA = a.fecha_fabricacion ? new Date(a.fecha_fabricacion).getTime() : 0;
-        const dateB = b.fecha_fabricacion ? new Date(b.fecha_fabricacion).getTime() : 0;
+        const dateA = a.fecha_fabricacion
+          ? new Date(a.fecha_fabricacion).getTime()
+          : 0;
+        const dateB = b.fecha_fabricacion
+          ? new Date(b.fecha_fabricacion).getTime()
+          : 0;
         return dateB - dateA;
       }
       return 0;
@@ -412,10 +550,11 @@ function HomeContent() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 lg:gap-5">
                 {filteredProducts.map((product) => {
-                  const details = mockProductDetails[product.id];
-                  const seller = mockPlatformUsers.find(
-                    (u) => u.id === product.id_vendedor,
-                  );
+                  const rawDetails = product.detalle_producto;
+                  const details = Array.isArray(rawDetails)
+                    ? rawDetails[0]
+                    : rawDetails;
+                  const seller = product.usuario;
                   const image =
                     details?.imagenes?.[0] ||
                     "https://images.unsplash.com/photo-1762139258224-236877b2c571?w=500";
