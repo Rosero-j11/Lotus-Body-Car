@@ -74,9 +74,7 @@ export default function RegisterPage() {
       id: Date.now().toString(),
       name: formData.name,
       email: formData.email,
-      role: formData.role,
-      phone: formData.phone,
-      joinedDate: new Date().toISOString(),
+      rol: formData.role,
     };
 
     saveRegisteredUser({ ...newUser, password: formData.password });

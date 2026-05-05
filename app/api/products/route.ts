@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { mockProducts } from '@/lib/data';
-
-// GET /api/products — Lista de productos con filtros opcionales
-// POST /api/products — Crear nuevo producto (solo vendedores)
+import { createClient } from '@/app/utils/supabase/server';
+import { toUUID } from '@/lib/server-utils';
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,53 +8,66 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search') || '';
     const brand = searchParams.get('brand') || '';
     const category = searchParams.get('category') || '';
+    const sellerId = searchParams.get('sellerId') || '';
     const sort = searchParams.get('sort') || 'relevance';
 
-    // TODO: Reemplazar con consulta real a la base de datos
-    // Ejemplo con Prisma:
-    // const products = await prisma.product.findMany({
-    //   where: {
-    //     AND: [
-    //       search ? { OR: [{ name: { contains: search } }, { description: { contains: search } }] } : {},
-    //       brand ? { brand } : {},
-    //       category ? { category } : {},
-    //     ],
-    //   },
-    //   orderBy: sort === 'price-asc' ? { price: 'asc' } : sort === 'price-desc' ? { price: 'desc' } : {},
-    // });
+    const supabase = await createClient();
 
-    let products = [...mockProducts];
+    let query = supabase.from('producto').select(`
+      *,
+      detalle_producto (
+        *
+      ),
+      usuario:id_vendedor (
+        id,
+        nombre,
+        direccion
+      )
+    `);
 
-    // Filtros sobre datos mock
     if (search) {
-      products = products.filter(
-        (p) =>
-          p.name.toLowerCase().includes(search.toLowerCase()) ||
-          p.brand.toLowerCase().includes(search.toLowerCase())
-      );
+      query = query.ilike('nombre', `%${search}%`);
     }
     if (brand) {
-      products = products.filter((p) => p.brand === brand);
+      query = query.eq('marca', brand);
     }
     if (category) {
-      products = products.filter((p) => p.category === category);
+      query = query.eq('categoria', category);
+    }
+    if (sellerId) {
+      query = query.eq('id_vendedor', toUUID(sellerId));
     }
 
     if (sort === 'price-asc') {
-      products.sort((a, b) => a.price - b.price);
+      query = query.order('precio', { ascending: true });
     } else if (sort === 'price-desc') {
-      products.sort((a, b) => b.price - a.price);
+      query = query.order('precio', { ascending: false });
+    }
+
+    const { data: products, error } = await query;
+
+    if (error) {
+      throw error;
     }
 
     return NextResponse.json({ products }, { status: 200 });
-  } catch {
-    return NextResponse.json({ error: 'Error al obtener productos' }, { status: 500 });
+  } catch (err: unknown) {
+    let message = 'Error desconocido';
+    if (err instanceof Error) {
+      message = err.message;
+    } else if (typeof err === 'object' && err !== null) {
+      const e = err as Record<string, unknown>;
+      message = String(e.message || e.details || e.code || JSON.stringify(err));
+    } else if (typeof err === 'string') {
+      message = err;
+    }
+    console.error('[POST /api/products]', err);
+    return NextResponse.json({ error: 'Error al crear producto', details: message }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    // Verificar autenticación mediante cookie
     const authCookie = request.cookies.get('lotus_auth')?.value;
     const roleCookie = request.cookies.get('lotus_role')?.value;
 
@@ -65,36 +76,70 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, description, brand, model, category, condition, price, stock } = body;
+    const { 
+      nombre, 
+      marca, 
+      modelo, 
+      categoria, 
+      condicion_pieza, 
+      anio,
+      precio, 
+      stock,
+      descripcion,
+      imagenes
+    } = body;
 
-    if (!name || !brand || !category || !condition || !price) {
+    if (!nombre || !marca || !categoria || !condicion_pieza || !anio || !precio) {
       return NextResponse.json({ error: 'Faltan campos obligatorios' }, { status: 400 });
     }
 
-    if (isNaN(Number(price)) || Number(price) <= 0) {
+    if (isNaN(Number(precio)) || Number(precio) <= 0) {
       return NextResponse.json({ error: 'Precio inválido' }, { status: 400 });
     }
 
-    // TODO: Reemplazar con inserción real en la base de datos
-    // También manejar upload de imágenes (ej. Cloudinary, S3, Vercel Blob)
-    // const product = await prisma.product.create({ data: { name, description, brand, model, category, condition, price: Number(price), stock: Number(stock) || 1 } });
+    const supabase = await createClient();
+    const id_vendedor = toUUID(authCookie);
 
-    const newProduct = {
-      id: Date.now().toString(),
-      name,
-      description,
-      brand,
-      model,
-      category,
-      condition,
-      price: Number(price),
+    // 1. Insertar producto
+    const { data: newProduct, error: productError } = await supabase.from('producto').insert([{
+      id_vendedor,
+      nombre,
+      marca,
+      modelo,
+      anio: Number(anio),
+      categoria,
+      condicion_pieza,
+      precio: Number(precio),
       stock: Number(stock) || 1,
-      images: [],
-      createdAt: new Date().toISOString(),
-    };
+      estado_publicacion: 'Activa'
+    }]).select().single();
+
+    if (productError) {
+      throw productError;
+    }
+
+    // 2. Insertar detalle
+    const { error: detailError } = await supabase.from('detalle_producto').insert([{
+      id_producto: newProduct.id,
+      descripcion: descripcion || '',
+      imagenes: imagenes || [],
+      especificaciones: {}
+    }]);
+
+    if (detailError) {
+      // Intento de limpieza si falla el detalle
+      await supabase.from('producto').delete().eq('id', newProduct.id);
+      throw detailError;
+    }
 
     return NextResponse.json({ product: newProduct }, { status: 201 });
-  } catch {
-    return NextResponse.json({ error: 'Error al crear producto' }, { status: 500 });
+  } catch (err: unknown) {
+    const message =
+      err instanceof Error
+        ? err.message
+        : typeof err === 'object' && err !== null && 'message' in err
+          ? String((err as Record<string, unknown>).message)
+          : String(err);
+    return NextResponse.json({ error: 'Error al crear producto', details: message }, { status: 500 });
   }
 }

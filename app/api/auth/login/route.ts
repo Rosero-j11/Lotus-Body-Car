@@ -21,11 +21,12 @@ export async function POST(request: NextRequest) {
     // if (!user || !await bcrypt.compare(password, user.passwordHash)) { ... }
 
     // Mock: simulación de login exitoso
+    const role = email.includes('admin') ? 'admin' : email.includes('seller') ? 'seller' : 'buyer';
     const mockUser = {
-      id: '1',
+      id: role === 'admin' ? 'u1' : role === 'seller' ? 'u2' : 'u3',
       name: 'Usuario Demo',
       email,
-      role: email.includes('admin') ? 'admin' : email.includes('seller') ? 'seller' : 'buyer',
+      role,
       phone: '+57 300 123 4567',
       joinedDate: new Date().toISOString(),
     };
@@ -34,7 +35,7 @@ export async function POST(request: NextRequest) {
 
     // Setear cookies HttpOnly para mayor seguridad en producción
     // Por ahora usamos cookies accesibles client-side para el middleware
-    response.cookies.set('lotus_auth', '1', {
+    response.cookies.set('lotus_auth', mockUser.id, {
       httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
