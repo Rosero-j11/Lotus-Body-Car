@@ -191,9 +191,24 @@ export default function SellerDashboardPage() {
     );
   };
 
-  const updateStatus = (id: string, newStatus: SellerProduct["status"]) => {
+  const updateStatus = async (id: string, newStatus: SellerProduct["status"]) => {
     const product = products.find((p) => p.id === id);
     if (!product) return;
+    const statusMap: Record<string, string> = {
+      available: "Activa",
+      reserved: "Reservado",
+      sold: "Vendida",
+      archived: "Archivada",
+    };
+    try {
+      await fetch(`/api/products/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ estado_publicacion: statusMap[newStatus] }),
+      });
+    } catch (err) {
+      console.error("Error updating status:", err);
+    }
     setProducts((prev) =>
       prev.map((p) => (p.id === id ? { ...p, status: newStatus } : p)),
     );
@@ -219,11 +234,25 @@ export default function SellerDashboardPage() {
       "Cancelar",
     );
     if (!result.isConfirmed) return;
+    try {
+      await fetch(`/api/products/${product.id}`, { method: "DELETE" });
+    } catch (err) {
+      console.error("Error deleting product:", err);
+    }
     setProducts((prev) => prev.filter((p) => p.id !== product.id));
     toastSuccess("Pieza eliminada correctamente");
   };
 
-  const handleArchive = (id: string) => {
+  const handleArchive = async (id: string) => {
+    try {
+      await fetch(`/api/products/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ estado_publicacion: "Archivada" }),
+      });
+    } catch (err) {
+      console.error("Error archiving product:", err);
+    }
     setProducts((prev) =>
       prev.map((p) => (p.id === id ? { ...p, status: "archived" } : p)),
     );
@@ -241,14 +270,14 @@ export default function SellerDashboardPage() {
     setEditModal({ open: true, product });
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editModal.product) return;
     const id = editModal.product.id;
-    const changes: Partial<SellerProduct> = {};
+    const changes: Record<string, unknown> = {};
     const changesDesc: string[] = [];
 
     if (editForm.price && Number(editForm.price) !== editModal.product.price) {
-      changes.price = Number(editForm.price);
+      changes.precio = Number(editForm.price);
       changesDesc.push(
         `precio cambiado a ${formatPrice(Number(editForm.price))}`,
       );
@@ -261,16 +290,29 @@ export default function SellerDashboardPage() {
       editForm.condition &&
       editForm.condition !== editModal.product.condition
     ) {
-      changes.condition = editForm.condition;
+      changes.condicion_pieza = editForm.condition;
       changesDesc.push(`condición cambiada a ${editForm.condition}`);
     }
 
     if (Object.keys(changes).length > 0) {
-      setProducts((prev) =>
-        prev.map((p) => (p.id === id ? { ...p, ...changes } : p)),
-      );
-      addHistory(id, "edited", changesDesc.join(", "));
-      toastSuccess("Cambios guardados correctamente");
+      try {
+        const response = await fetch(`/api/products/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(changes),
+        });
+        if (!response.ok) {
+          const errData = await response.json();
+          throw new Error(errData.error || "Error al actualizar");
+        }
+        setProducts((prev) =>
+          prev.map((p) => (p.id === id ? { ...p, ...changes } : p)),
+        );
+        addHistory(id, "edited", changesDesc.join(", "));
+        toastSuccess("Cambios guardados correctamente");
+      } catch (err) {
+        console.error("Error updating product:", err);
+      }
     }
     setEditModal({ open: false, product: null });
   };

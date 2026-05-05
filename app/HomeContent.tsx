@@ -288,13 +288,15 @@ function HomeContent() {
         !selectedConditions.length ||
         selectedConditions.includes(p.condicion_pieza);
       const inStock = (p.stock ?? 0) > 0;
+      const isActive = p.estado_publicacion === "Activa";
       return (
         matchesSearch &&
         matchesBrand &&
         matchesModel &&
         matchesCat &&
         matchesCond &&
-        inStock
+        inStock &&
+        isActive
       );
     })
     .sort((a, b) => {
