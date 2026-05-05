@@ -42,6 +42,19 @@ export function consumeResetToken(): void {
   if (typeof window !== 'undefined') localStorage.removeItem('lotus_reset_token');
 }
 
+// ─── Stored passwords (demo) ────────────────────────────────────────────────────
+const PW_PREFIX = 'lotus_pw_';
+
+export function saveUserPassword(email: string, password: string): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(PW_PREFIX + email, password);
+}
+
+export function getUserPassword(email: string): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(PW_PREFIX + email);
+}
+
 // ─── Login attempts ───────────────────────────────────────────────────────────
 const ATTEMPTS_KEY = 'lotus_login_attempts';
 const BLOCK_DURATION = 15 * 60 * 1000; // 15 min

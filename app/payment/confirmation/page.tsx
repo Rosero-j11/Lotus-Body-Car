@@ -42,7 +42,7 @@ export default function PaymentConfirmationPage() {
 
   useEffect(() => {
     clearCart();
-  }, []);
+  }, [clearCart]);
 
   return (
     <div className="min-h-screen bg-gray-50">

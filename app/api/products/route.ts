@@ -98,7 +98,19 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = await createClient();
-    const id_vendedor = toUUID(authCookie);
+
+    const candidateId = toUUID(authCookie);
+    const { data: dbUser } = await supabase
+      .from('usuario')
+      .select('id')
+      .or(`id.eq.${authCookie},id.eq.${candidateId}`)
+      .maybeSingle();
+
+    if (!dbUser) {
+      return NextResponse.json({ error: 'Usuario no encontrado — inicia sesión de nuevo' }, { status: 401 });
+    }
+
+    const id_vendedor = dbUser.id;
 
     // 1. Insertar producto
     const { data: newProduct, error: productError } = await supabase.from('producto').insert([{

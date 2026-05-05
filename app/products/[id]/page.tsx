@@ -126,6 +126,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
     const next = prev + 1;
     localStorage.setItem(key, String(next));
     setViewCount(next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product?.id]);
 
   const prevImage = () => {
@@ -150,7 +151,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [isZoomed, product?.images?.length]);
+  }, [isZoomed, product]);
 
   if (loading) {
     return (

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Mail, Lock, Eye, EyeOff, User, Phone, ArrowLeft } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
-import { validatePassword } from '@/lib/utils';
+import { validatePassword, saveUserPassword } from '@/lib/utils';
 import { mockRegisteredEmails } from '@/lib/data';
 
 export default function RegisterPage() {
@@ -23,6 +23,7 @@ export default function RegisterPage() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<{
     name?: string; email?: string; phone?: string;
     password?: string; confirm?: string; terms?: string;
@@ -33,7 +34,7 @@ export default function RegisterPage() {
     setFieldErrors((prev) => ({ ...prev, [field]: undefined, confirm: undefined }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const errs: typeof fieldErrors = {};
 
@@ -69,16 +70,44 @@ export default function RegisterPage() {
       return;
     }
 
-    // Mock registration - en producción llamar a /api/auth/register
-    const newUser = {
-      id: Date.now().toString(),
-      name: formData.name,
-      email: formData.email,
-      rol: formData.role,
-    };
+    // Llamar a la API de registro para insertar en la base de datos
+    setIsSubmitting(true);
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          phone: formData.phone,
+          role: formData.role,
+        }),
+      });
 
-    login(newUser);
-    router.push('/');
+      const data = await response.json();
+
+      if (!response.ok) {
+        setFieldErrors({ email: data.error || 'Error al registrar' });
+        return;
+      }
+
+      const dbUser = data.user;
+      login({
+        id: dbUser.id,
+        name: dbUser.nombre,
+        email: dbUser.correo,
+        rol: dbUser.rol,
+        phone: dbUser.telefono,
+        joinedDate: new Date().toISOString(),
+      });
+      saveUserPassword(formData.email, formData.password);
+      router.push('/');
+    } catch {
+      setFieldErrors({ email: 'Error de conexión al servidor' });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -252,9 +281,10 @@ export default function RegisterPage() {
           <div className="flex flex-col gap-3 sm:gap-4 p-4 sm:p-6">
             <button
               type="submit"
-              className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-md font-medium transition text-sm sm:text-base"
+              disabled={isSubmitting}
+              className="w-full bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 rounded-md font-medium transition text-sm sm:text-base"
             >
-              Crear Cuenta
+              {isSubmitting ? 'Creando cuenta...' : 'Crear Cuenta'}
             </button>
             <div className="text-center text-xs sm:text-sm text-gray-600">
               ¿Ya tienes una cuenta?{' '}

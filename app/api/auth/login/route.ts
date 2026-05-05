@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/app/utils/supabase/server';
 
-// POST /api/auth/login
-// Stub listo para integración con base de datos.
-// Reemplaza la lógica mock con tu ORM/DB favorito (Prisma, Drizzle, etc.)
+const DEMO_USERS = [
+  { email: 'admin@lotusbodycar.com', password: 'Admin123!', role: 'admin', name: 'Administrador LBC', phone: '+57 300 000 0001' },
+  { email: 'vendedor@lotusbodycar.com', password: 'Vend123!', role: 'seller', name: 'Carlos Vendedor', phone: '+57 311 234 5678' },
+  { email: 'buyer@lotusbodycar.com', password: 'Buy123!', role: 'buyer', name: 'María Compradora', phone: '+57 322 987 6543' },
+];
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, password } = body;
+    const { email, password, storedPassword } = body;
 
     if (!email || !password) {
       return NextResponse.json(
@@ -15,34 +19,50 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: Reemplazar con consulta real a la base de datos
-    // Ejemplo con Prisma:
-    // const user = await prisma.user.findUnique({ where: { email } });
-    // if (!user || !await bcrypt.compare(password, user.passwordHash)) { ... }
+    const demo = DEMO_USERS.find((u) => u.email === email && u.password === password);
+    const isStoredMatch = storedPassword && password === storedPassword;
 
-    // Mock: simulación de login exitoso
-    const role = email.includes('admin') ? 'admin' : email.includes('seller') ? 'seller' : 'buyer';
-    const mockUser = {
-      id: role === 'admin' ? 'u1' : role === 'seller' ? 'u2' : 'u3',
-      name: 'Usuario Demo',
-      email,
-      role,
-      phone: '+57 300 123 4567',
-      joinedDate: new Date().toISOString(),
-    };
+    if (!demo && !isStoredMatch) {
+      return NextResponse.json({ error: 'Credenciales incorrectas' }, { status: 401 });
+    }
 
-    const response = NextResponse.json({ user: mockUser }, { status: 200 });
+    const supabase = await createClient();
 
-    // Setear cookies HttpOnly para mayor seguridad en producción
-    // Por ahora usamos cookies accesibles client-side para el middleware
-    response.cookies.set('lotus_auth', mockUser.id, {
+    let { data: existing } = await supabase
+      .from('usuario')
+      .select('id, nombre, correo, rol, telefono, reputacion, verificado')
+      .eq('correo', email)
+      .maybeSingle();
+
+    if (!existing) {
+      const userData = demo
+        ? { nombre: demo.name, rol: demo.role, telefono: demo.phone, reputacion: demo.role === 'admin' ? 5.0 : demo.role === 'seller' ? 4.8 : null }
+        : { nombre: email.split('@')[0], rol: 'buyer', telefono: '' };
+
+      const { data: created, error: insertError } = await supabase
+        .from('usuario')
+        .insert([{
+          ...userData,
+          correo: email,
+          verificado: true,
+        }])
+        .select('id, nombre, correo, rol, telefono, reputacion, verificado')
+        .single();
+
+      if (insertError) throw insertError;
+      existing = created;
+    }
+
+    const response = NextResponse.json({ user: existing }, { status: 200 });
+
+    response.cookies.set('lotus_auth', existing.id, {
       httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 días
+      maxAge: 60 * 60 * 24 * 7,
       path: '/',
     });
-    response.cookies.set('lotus_role', mockUser.role, {
+    response.cookies.set('lotus_role', existing.rol, {
       httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -51,7 +71,9 @@ export async function POST(request: NextRequest) {
     });
 
     return response;
-  } catch {
-    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error desconocido';
+    console.error('[POST /api/auth/login]', err);
+    return NextResponse.json({ error: 'Error interno del servidor', details: message }, { status: 500 });
   }
 }

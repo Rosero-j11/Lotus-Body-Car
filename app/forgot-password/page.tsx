@@ -2,15 +2,15 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Mail, CheckCircle2, Send } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ArrowLeft, Mail } from 'lucide-react';
 import { generateResetToken, saveResetToken } from '@/lib/utils';
 
 export default function ForgotPasswordPage() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState('');
-  const [sent, setSent] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [mockToken, setMockToken] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,61 +27,29 @@ export default function ForgotPasswordPage() {
     }
 
     setIsSubmitting(true);
-    await new Promise((r) => setTimeout(r, 600));
 
-    // En producción: verificar en DB y enviar email real
-    // Aquí generamos token y lo guardamos en localStorage
-    const token = generateResetToken();
-    saveResetToken(email, token);
-    setMockToken(token); // Solo mostrado en demo — en producción se envía por correo
-    setSent(true);
-    setIsSubmitting(false);
+    try {
+      const response = await fetch('/api/auth/check-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        setEmailError(data.error || 'Correo no encontrado');
+        return;
+      }
+
+      const token = generateResetToken();
+      saveResetToken(email, token);
+      router.push(`/reset-password?token=${token}`);
+    } catch {
+      setEmailError('Error de conexión al servidor');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
-
-  if (sent) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-red-900 flex items-center justify-center p-4">
-        <div className="w-full max-w-md bg-white rounded-lg shadow-xl p-6 text-center space-y-4">
-          <div className="flex justify-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-              <CheckCircle2 className="h-8 w-8 text-green-600" />
-            </div>
-          </div>
-          <h2 className="text-xl font-bold text-gray-900">¡Revisa tu correo!</h2>
-          <p className="text-sm text-gray-600">
-            Si el correo <span className="font-medium text-gray-800">{email}</span> está registrado, recibirás un enlace de recuperación en los próximos minutos.
-          </p>
-          <p className="text-xs text-gray-500">
-            El enlace expira en <strong>15 minutos</strong>. Revisa también tu carpeta de spam.
-          </p>
-
-          {/* Demo: mostrar el token directamente ya que no hay email real */}
-          <div className="bg-amber-50 border border-amber-200 rounded p-3 text-left">
-            <p className="text-xs font-semibold text-amber-800 mb-1">Demo — enlace generado:</p>
-            <Link
-              href={`/reset-password?token=${mockToken}`}
-              className="text-xs text-blue-600 underline break-all"
-            >
-              /reset-password?token={mockToken}
-            </Link>
-          </div>
-
-          <div className="flex flex-col gap-2 pt-2">
-            <button
-              onClick={() => { setSent(false); setEmail(''); }}
-              className="flex items-center justify-center gap-2 text-sm text-gray-600 hover:text-gray-900"
-            >
-              <Send className="h-4 w-4" />
-              Reenviar enlace
-            </button>
-            <Link href="/login" className="text-sm text-red-600 hover:underline font-medium">
-              Volver al inicio de sesión
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-red-900 flex items-center justify-center p-4">
@@ -101,7 +69,7 @@ export default function ForgotPasswordPage() {
           </div>
           <h2 className="text-xl font-bold text-gray-900">Recuperar contraseña</h2>
           <p className="text-sm text-gray-500 mt-1">
-            Ingresa tu correo y te enviaremos un enlace para restablecer tu contraseña.
+            Ingresa tu correo registrado para restablecer tu contraseña.
           </p>
         </div>
 
@@ -130,7 +98,7 @@ export default function ForgotPasswordPage() {
             disabled={isSubmitting}
             className="w-full bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white py-2.5 rounded-md font-medium text-sm transition"
           >
-            {isSubmitting ? 'Enviando...' : 'Enviar enlace de recuperación'}
+            {isSubmitting ? 'Verificando...' : 'Restablecer contraseña'}
           </button>
           <p className="text-center text-sm text-gray-500">
             ¿Recordaste tu contraseña?{' '}

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -187,7 +187,7 @@ export default function Header() {
                         {user.name.charAt(0).toUpperCase()}
                       </span>
                     </div>
-                    <span className="hidden lg:inline text-sm font-medium">{user.name}</span>
+                    <span className="hidden lg:inline text-sm font-medium truncate max-w-[120px]">{user.name}</span>
                     <ChevronDown className="h-3.5 w-3.5 text-gray-500 hidden md:inline" />
                   </button>
 
@@ -196,8 +196,8 @@ export default function Header() {
                       <div className="fixed inset-0 z-10" onClick={() => setIsDropdownOpen(false)} />
                       <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
                         <div className="px-4 py-3 border-b border-gray-200">
-                          <p className="text-sm font-medium">{user.name}</p>
-                          <p className="text-xs text-gray-500">{user.email}</p>
+                          <p className="text-sm font-medium truncate">{user.name}</p>
+                          <p className="text-xs text-gray-500 truncate">{user.email}</p>
                           <span className="inline-block mt-2 px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
                             {roleLabels[user.rol] || user.rol}
                           </span>

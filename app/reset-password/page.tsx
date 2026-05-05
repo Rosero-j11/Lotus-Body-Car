@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Lock, Eye, EyeOff, CheckCircle2, XCircle, ArrowLeft } from 'lucide-react';
-import { validateResetToken, consumeResetToken, validatePassword } from '@/lib/utils';
+import { validateResetToken, consumeResetToken, validatePassword, saveUserPassword } from '@/lib/utils';
 
 function ResetPasswordForm() {
   const router = useRouter();
@@ -53,7 +53,7 @@ function ResetPasswordForm() {
     setIsSubmitting(true);
     await new Promise((r) => setTimeout(r, 500));
 
-    // En producción: llamar a /api/auth/reset-password con token + nueva contraseña
+    saveUserPassword(tokenEmail, password);
     consumeResetToken();
     setSuccess(true);
     setIsSubmitting(false);

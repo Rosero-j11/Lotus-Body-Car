@@ -10,19 +10,13 @@ import {
   recordFailedAttempt,
   clearLoginAttempts,
   getLoginAttempts,
+  getUserPassword,
 } from '@/lib/utils';
 
 function formatRemainingTime(ms: number): string {
   const minutes = Math.ceil(ms / 60000);
   return `${minutes} minuto${minutes !== 1 ? 's' : ''}`;
 }
-
-// Credenciales de demo — en producción reemplazar con /api/auth/login + DB
-const VALID_CREDENTIALS = [
-  { email: 'admin@lotusbodycar.com', password: 'Admin123!', role: 'admin' as const, name: 'Administrador LBC', id: 'u1' },
-  { email: 'vendedor@lotusbodycar.com', password: 'Vend123!', role: 'seller' as const, name: 'Carlos Vendedor', id: 'u2' },
-  { email: 'buyer@lotusbodycar.com', password: 'Buy123!', role: 'buyer' as const, name: 'María Compradora', id: 'u3' },
-];
 
 export default function LoginPage() {
   const router = useRouter();
@@ -71,29 +65,44 @@ export default function LoginPage() {
     }
 
     setIsSubmitting(true);
-    await new Promise((r) => setTimeout(r, 400));
 
-    const found = VALID_CREDENTIALS.find((c) => c.email === email && c.password === password);
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, storedPassword: getUserPassword(email) }),
+      });
 
-    if (found) {
-      clearLoginAttempts();
-      login({ id: found.id, name: found.name, email: found.email, rol: found.role, joinedDate: new Date().toISOString() });
-      router.push('/');
-    } else {
-      const updated = recordFailedAttempt();
-      const remaining = 3 - updated.count;
-      if (updated.blockedUntil && Date.now() < updated.blockedUntil) {
-        setIsBlocked(true);
-        setBlockedMsg(formatRemainingTime(updated.blockedUntil - Date.now()));
+      const data = await response.json();
+
+      if (response.ok && data.user) {
+        clearLoginAttempts();
+        login({
+          id: data.user.id,
+          name: data.user.nombre,
+          email: data.user.correo,
+          rol: data.user.rol,
+          phone: data.user.telefono,
+          joinedDate: new Date().toISOString(),
+        });
+        router.push('/');
       } else {
-        setAttemptsLeft(Math.max(0, remaining));
-        // Error genérico — no revela si falló email o contraseña (HU-002)
-        setError(
-          remaining > 0
-            ? `Credenciales incorrectas. Te quedan ${remaining} intento${remaining !== 1 ? 's' : ''}.`
-            : 'Credenciales incorrectas.'
-        );
+        const updated = recordFailedAttempt();
+        const remaining = 3 - updated.count;
+        if (updated.blockedUntil && Date.now() < updated.blockedUntil) {
+          setIsBlocked(true);
+          setBlockedMsg(formatRemainingTime(updated.blockedUntil - Date.now()));
+        } else {
+          setAttemptsLeft(Math.max(0, remaining));
+          setError(
+            remaining > 0
+              ? `Credenciales incorrectas. Te quedan ${remaining} intento${remaining !== 1 ? 's' : ''}.`
+              : 'Credenciales incorrectas.'
+          );
+        }
       }
+    } catch {
+      setError('Error de conexión al servidor');
     }
     setIsSubmitting(false);
   };

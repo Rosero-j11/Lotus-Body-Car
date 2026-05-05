@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -67,13 +67,7 @@ export default function SellerDashboardPage() {
     }
   }, [user, isLoading, router]);
 
-  useEffect(() => {
-    if (user && (user.rol === "seller" || user.rol === "admin")) {
-      fetchSellerProducts();
-    }
-  }, [user]);
-
-  const fetchSellerProducts = async () => {
+  const fetchSellerProducts = useCallback(async () => {
     setIsFetching(true);
     try {
       const response = await fetch(`/api/products?sellerId=${user?.id}`);
@@ -122,7 +116,13 @@ export default function SellerDashboardPage() {
     } finally {
       setIsFetching(false);
     }
-  };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (user && (user.rol === "seller" || user.rol === "admin")) {
+      fetchSellerProducts();
+    }
+  }, [user, fetchSellerProducts]);
 
   if (isLoading || (isFetching && products.length === 0))
     return (
