@@ -287,12 +287,14 @@ function HomeContent() {
       const matchesCond =
         !selectedConditions.length ||
         selectedConditions.includes(p.condicion_pieza);
+      const inStock = (p.stock ?? 0) > 0;
       return (
         matchesSearch &&
         matchesBrand &&
         matchesModel &&
         matchesCat &&
-        matchesCond
+        matchesCond &&
+        inStock
       );
     })
     .sort((a, b) => {
