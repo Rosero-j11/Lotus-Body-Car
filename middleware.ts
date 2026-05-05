@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { updateSession } from '@/app/utils/supabase/middleware';
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
+  // Update Supabase session
+  await updateSession(request);
+  
   const { pathname } = request.nextUrl;
-  const isAuthenticated = request.cookies.get('lotus_auth')?.value === '1';
+  const isAuthenticated = !!request.cookies.get('lotus_auth')?.value;
   const userRole = request.cookies.get('lotus_role')?.value;
 
   // Protect seller routes

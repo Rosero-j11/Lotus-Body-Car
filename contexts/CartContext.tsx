@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { CartItem } from '@/lib/types';
 import { mockCartItems } from '@/lib/data';
 
@@ -18,9 +18,36 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+const CART_STORAGE_KEY = 'lotus_cart';
+
+function loadCart(): CartItem[] {
+  if (typeof window === 'undefined') return mockCartItems;
+  try {
+    const stored = localStorage.getItem(CART_STORAGE_KEY);
+    if (stored) return JSON.parse(stored) as CartItem[];
+  } catch {
+    // ignorar datos corruptos
+  }
+  return [];
+}
+
+function saveCart(items: CartItem[]) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
-  // Inicializar con datos mock para demostración
-  const [cartItems, setCartItems] = useState<CartItem[]>(mockCartItems);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    setCartItems(loadCart());
+    setIsHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (isHydrated) saveCart(cartItems);
+  }, [cartItems, isHydrated]);
 
   const addItem = (item: CartItem) => {
     setCartItems((prev) => {

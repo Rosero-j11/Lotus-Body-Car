@@ -1,7 +1,13 @@
-'use client';
+"use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User } from '@/lib/types';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import { User } from "@/lib/types";
 
 interface UserContextType {
   user: User | null;
@@ -30,7 +36,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem('lotus_user');
+      const stored = localStorage.getItem("lotus_user");
       if (stored) setUser(JSON.parse(stored));
     } catch {
       // Ignore parse errors
@@ -40,28 +46,28 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const login = (userData: User) => {
     setUser(userData);
-    localStorage.setItem('lotus_user', JSON.stringify(userData));
-    setCookie('lotus_auth', '1', COOKIE_MAX_AGE);
-    setCookie('lotus_role', userData.role, COOKIE_MAX_AGE);
+    localStorage.setItem("lotus_user", JSON.stringify(userData));
+    setCookie("lotus_auth", userData.id, COOKIE_MAX_AGE);
+    setCookie("lotus_role", userData.rol, COOKIE_MAX_AGE);
   };
 
   const logout = (allDevices = false) => {
     setUser(null);
-    localStorage.removeItem('lotus_user');
+    localStorage.removeItem("lotus_user");
     if (allDevices) {
       // En producción: llamar a /api/auth/logout-all para invalidar tokens en DB
-      localStorage.removeItem('lotus_sessions');
+      localStorage.removeItem("lotus_sessions");
     }
-    clearCookie('lotus_auth');
-    clearCookie('lotus_role');
+    clearCookie("lotus_auth");
+    clearCookie("lotus_role");
   };
 
   const updateUser = (data: Partial<User>) => {
-    setUser((prev) => {
+    setUser((prev: User | null) => {
       if (!prev) return prev;
       const updated = { ...prev, ...data };
-      localStorage.setItem('lotus_user', JSON.stringify(updated));
-      if (data.role) setCookie('lotus_role', data.role, COOKIE_MAX_AGE);
+      localStorage.setItem("lotus_user", JSON.stringify(updated));
+      if (data.rol) setCookie("lotus_role", data.rol, COOKIE_MAX_AGE);
       return updated;
     });
   };
@@ -69,14 +75,16 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const deleteAccount = () => {
     // Soft delete: anonimiza datos y cierra sesión
     // En producción: llamar a /api/auth/delete con contraseña
-    localStorage.removeItem('lotus_user');
+    localStorage.removeItem("lotus_user");
     setUser(null);
-    clearCookie('lotus_auth');
-    clearCookie('lotus_role');
+    clearCookie("lotus_auth");
+    clearCookie("lotus_role");
   };
 
   return (
-    <UserContext.Provider value={{ user, login, logout, updateUser, deleteAccount, isLoading }}>
+    <UserContext.Provider
+      value={{ user, login, logout, updateUser, deleteAccount, isLoading }}
+    >
       {children}
     </UserContext.Provider>
   );
@@ -84,6 +92,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
 export function useUser() {
   const context = useContext(UserContext);
-  if (!context) throw new Error('useUser must be used within a UserProvider');
+  if (!context) throw new Error("useUser must be used within a UserProvider");
   return context;
 }

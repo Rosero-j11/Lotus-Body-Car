@@ -1,15 +1,17 @@
-import type { NextConfig } from 'next';
-
-const nextConfig: NextConfig = {
+// next.config.js
+const nextConfig = {
   images: {
     remotePatterns: [
       {
         protocol: 'https',
         hostname: 'images.unsplash.com',
-        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'srgrappomudpsncxlrpk.supabase.co',
       },
     ],
   },
-};
+}
 
-export default nextConfig;
+module.exports = nextConfig

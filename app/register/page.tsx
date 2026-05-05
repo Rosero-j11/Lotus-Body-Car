@@ -74,7 +74,7 @@ export default function RegisterPage() {
       id: Date.now().toString(),
       name: formData.name,
       email: formData.email,
-      role: formData.role,
+      rol: formData.role,
     };
 
     login(newUser);
