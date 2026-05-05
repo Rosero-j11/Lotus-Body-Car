@@ -48,7 +48,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setUser(userData);
     localStorage.setItem("lotus_user", JSON.stringify(userData));
     setCookie("lotus_auth", userData.id, COOKIE_MAX_AGE);
-    setCookie("lotus_role", userData.role, COOKIE_MAX_AGE);
+    setCookie("lotus_role", userData.rol, COOKIE_MAX_AGE);
   };
 
   const logout = (allDevices = false) => {
@@ -67,7 +67,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       if (!prev) return prev;
       const updated = { ...prev, ...data };
       localStorage.setItem("lotus_user", JSON.stringify(updated));
-      if (data.role) setCookie("lotus_role", data.role, COOKIE_MAX_AGE);
+      if (data.rol) setCookie("lotus_role", data.rol, COOKIE_MAX_AGE);
       return updated;
     });
   };

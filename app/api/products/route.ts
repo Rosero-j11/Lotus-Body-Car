@@ -52,8 +52,17 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ products }, { status: 200 });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Error desconocido';
-    return NextResponse.json({ error: 'Error al obtener productos', details: message }, { status: 500 });
+    let message = 'Error desconocido';
+    if (err instanceof Error) {
+      message = err.message;
+    } else if (typeof err === 'object' && err !== null) {
+      const e = err as Record<string, unknown>;
+      message = String(e.message || e.details || e.code || JSON.stringify(err));
+    } else if (typeof err === 'string') {
+      message = err;
+    }
+    console.error('[POST /api/products]', err);
+    return NextResponse.json({ error: 'Error al crear producto', details: message }, { status: 500 });
   }
 }
 
@@ -125,7 +134,12 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ product: newProduct }, { status: 201 });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Error desconocido';
+    const message =
+      err instanceof Error
+        ? err.message
+        : typeof err === 'object' && err !== null && 'message' in err
+          ? String((err as Record<string, unknown>).message)
+          : String(err);
     return NextResponse.json({ error: 'Error al crear producto', details: message }, { status: 500 });
   }
 }

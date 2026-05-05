@@ -310,90 +310,18 @@ function HomeContent() {
       return 0;
     });
 
-  const FilterPanel = () => (
-    <div className="space-y-5">
-      {/* Marca */}
-      <div>
-        <h5 className="font-semibold text-sm mb-2">Marca</h5>
-        <div className="space-y-1.5">
-          {brands.map((brand) => (
-            <label
-              key={brand}
-              className="flex items-center gap-2 text-sm cursor-pointer hover:text-gray-900"
-            >
-              <input
-                type="checkbox"
-                checked={selectedBrands.includes(brand)}
-                onChange={() => toggleBrand(brand)}
-                className="rounded border-gray-300 text-red-600 focus:ring-red-500 h-3.5 w-3.5"
-              />
-              {brand}
-            </label>
-          ))}
-        </div>
-      </div>
-
-      {/* Modelo — dependiente de marca (HU-014) */}
-      {availableModels.length > 0 && (
-        <div>
-          <h5 className="font-semibold text-sm mb-2">Modelo</h5>
-          <select
-            value={selectedModel}
-            onChange={(e) => setSelectedModel(e.target.value)}
-            className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-          >
-            <option value="">Todos los modelos</option>
-            {availableModels.map((m) => (
-              <option key={m} value={m}>
-                {m}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-
-      {/* Categoría */}
-      <div>
-        <h5 className="font-semibold text-sm mb-2">Categoría</h5>
-        <div className="space-y-1.5">
-          {categories.map((cat) => (
-            <label
-              key={cat}
-              className="flex items-center gap-2 text-sm cursor-pointer hover:text-gray-900"
-            >
-              <input
-                type="checkbox"
-                checked={selectedCategories.includes(cat)}
-                onChange={() => toggleCategory(cat)}
-                className="rounded border-gray-300 text-red-600 focus:ring-red-500 h-3.5 w-3.5"
-              />
-              {cat}
-            </label>
-          ))}
-        </div>
-      </div>
-
-      {/* Estado de la pieza */}
-      <div>
-        <h5 className="font-semibold text-sm mb-2">Estado</h5>
-        <div className="space-y-1.5">
-          {conditions.map((cond) => (
-            <label
-              key={cond}
-              className="flex items-center gap-2 text-sm cursor-pointer hover:text-gray-900"
-            >
-              <input
-                type="checkbox"
-                checked={selectedConditions.includes(cond)}
-                onChange={() => toggleCondition(cond)}
-                className="rounded border-gray-300 text-red-600 focus:ring-red-500 h-3.5 w-3.5"
-              />
-              {cond}
-            </label>
-          ))}
-        </div>
-      </div>
-    </div>
+  const renderFilterPanel = (
+    <FilterPanel
+      selectedBrands={selectedBrands}
+      selectedModel={selectedModel}
+      selectedCategories={selectedCategories}
+      selectedConditions={selectedConditions}
+      availableModels={availableModels}
+      toggleBrand={toggleBrand}
+      toggleCategory={toggleCategory}
+      toggleCondition={toggleCondition}
+      setSelectedModel={setSelectedModel}
+    />
   );
 
   return (
@@ -525,7 +453,7 @@ function HomeContent() {
                   </button>
                 )}
               </div>
-              <FilterPanel />
+              {renderFilterPanel}
             </div>
           </div>
 
@@ -634,7 +562,7 @@ function HomeContent() {
               </div>
             </div>
             <div className="flex-1 overflow-y-auto p-5">
-              <FilterPanel />
+              {renderFilterPanel}
             </div>
             <div className="p-4 border-t">
               <button

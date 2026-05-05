@@ -160,7 +160,7 @@ export default function ProfilePage() {
               <p className="font-semibold text-gray-900">{user.name}</p>
               <p className="text-sm text-gray-500">{user.email}</p>
               <span className="inline-block mt-1 px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded capitalize">
-                {user.role === 'buyer' ? 'Comprador' : user.role === 'seller' ? 'Vendedor' : 'Administrador'}
+                {user.rol === 'buyer' ? 'Comprador' : user.rol === 'seller' ? 'Vendedor' : 'Administrador'}
               </span>
             </div>
           </div>

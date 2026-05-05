@@ -8,7 +8,7 @@ const nextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'https://srgrappomudpsncxlrpk.supabase.co', // Replace with your actual Supabase project ID
+        hostname: 'srgrappomudpsncxlrpk.supabase.co',
       },
     ],
   },

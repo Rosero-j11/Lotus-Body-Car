@@ -21,7 +21,6 @@ import {
 import { useUser } from "@/contexts/UserContext";
 import { formatPrice, formatDate } from "@/lib/utils";
 import { lotusWarning, lotusConfirmDanger, toastSuccess } from "@/lib/swal";
-import Image from "next/image";
 import type { SellerProduct, ProductHistory } from "../../../lib/types";
 import type { Producto } from "@/lib/types";
 
@@ -62,14 +61,14 @@ export default function SellerDashboardPage() {
   useEffect(() => {
     if (
       !isLoading &&
-      (!user || (user.role !== "seller" && user.role !== "admin"))
+      (!user || (user.rol !== "seller" && user.rol !== "admin"))
     ) {
       router.push("/login");
     }
   }, [user, isLoading, router]);
 
   useEffect(() => {
-    if (user && (user.role === "seller" || user.role === "admin")) {
+    if (user && (user.rol === "seller" || user.rol === "admin")) {
       fetchSellerProducts();
     }
   }, [user]);
@@ -78,10 +77,23 @@ export default function SellerDashboardPage() {
     setIsFetching(true);
     try {
       const response = await fetch(`/api/products?sellerId=${user?.id}`);
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
       const data = await response.json();
       if (data.products) {
         setProducts(
-          data.products.map((p: ApiProductResponse) => ({
+          data.products.map((p: ApiProductResponse) => {
+            const rawDetail = p.detalle_producto;
+            const detail = Array.isArray(rawDetail) ? rawDetail[0] : rawDetail;
+            const rawImages = detail?.imagenes;
+            const image = Array.isArray(rawImages)
+              ? rawImages[0]
+              : typeof rawImages === "string"
+                ? rawImages
+                : "https://images.unsplash.com/photo-1486496146582-9ffcd0b2b2b7?w=500";
+
+            return {
             id: p.id,
             name: p.nombre,
             brand: p.marca,
@@ -97,13 +109,12 @@ export default function SellerDashboardPage() {
                     ? "sold"
                     : "archived",
             stock: p.stock,
-            image:
-              p.detalle_producto?.[0]?.imagenes?.[0] ||
-              "https://images.unsplash.com/photo-1486496146582-9ffcd0b2b2b7?w=500",
+            image,
             publishDate: p.created_at || new Date().toISOString(),
             history: [],
             views: Math.floor(Math.random() * 200),
-          })),
+          };
+          }),
         );
       }
     } catch (err) {
@@ -119,7 +130,7 @@ export default function SellerDashboardPage() {
         <div className="animate-pulse text-gray-400">Cargando...</div>
       </div>
     );
-  if (!user || (user.role !== "seller" && user.role !== "admin")) return null;
+  if (!user || (user.rol !== "seller" && user.rol !== "admin")) return null;
 
   const statusConfig: Record<string, { label: string; className: string }> = {
     available: {
@@ -413,12 +424,11 @@ export default function SellerDashboardPage() {
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-3">
                           <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                            <Image
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
                               src={product.image}
                               alt={product.name}
-                              fill
-                              className="object-cover"
-                              sizes="48px"
+                              className="w-full h-full object-cover"
                             />
                           </div>
                           <div>
@@ -519,12 +529,11 @@ export default function SellerDashboardPage() {
                 >
                   <div className="flex gap-3 mb-3">
                     <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                      <Image
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
                         src={product.image}
                         alt={product.name}
-                        fill
-                        className="object-cover"
-                        sizes="64px"
+                        className="w-full h-full object-cover"
                       />
                     </div>
                     <div className="flex-1 min-w-0">

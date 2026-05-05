@@ -199,11 +199,11 @@ export default function Header() {
                           <p className="text-sm font-medium">{user.name}</p>
                           <p className="text-xs text-gray-500">{user.email}</p>
                           <span className="inline-block mt-2 px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
-                            {roleLabels[user.role] || user.role}
+                            {roleLabels[user.rol] || user.rol}
                           </span>
                         </div>
 
-                        {(user.role === 'seller' || user.role === 'admin') && (
+                        {(user.rol === 'seller' || user.rol === 'admin') && (
                           <>
                             <Link href="/seller/dashboard" onClick={() => setIsDropdownOpen(false)}
                               className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-gray-50">
@@ -218,7 +218,7 @@ export default function Header() {
                           </>
                         )}
 
-                        {user.role === 'admin' && (
+                        {user.rol === 'admin' && (
                           <>
                             <div className="border-t border-gray-200 my-1" />
                             <Link href="/admin" onClick={() => setIsDropdownOpen(false)}

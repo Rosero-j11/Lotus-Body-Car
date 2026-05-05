@@ -52,7 +52,7 @@ export default function AdminDashboardPage() {
   );
 
   useEffect(() => {
-    if (!isLoading && (!user || user.role !== "admin")) {
+    if (!isLoading && (!user || user.rol !== "admin")) {
       router.push("/login");
     }
   }, [user, isLoading, router]);
@@ -65,7 +65,7 @@ export default function AdminDashboardPage() {
     );
   }
 
-  if (!user || user.role !== "admin") return null;
+  if (!user || user.rol !== "admin") return null;
 
   const maxSales = Math.max(...adminStats.monthlySales.map((s) => s.sales));
 

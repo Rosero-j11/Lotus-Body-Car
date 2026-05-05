@@ -35,7 +35,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     return NextResponse.json({ product }, { status: 200 });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Error desconocido';
+    let message = 'Error desconocido';
+    if (err instanceof Error) {
+      message = err.message;
+    } else if (typeof err === 'object' && err !== null) {
+      const e = err as Record<string, unknown>;
+      message = String(e.message || e.details || e.code || JSON.stringify(err));
+    }
+    console.error('[GET /api/products/[id]]', err);
     return NextResponse.json({ error: 'Error al obtener el producto', details: message }, { status: 500 });
   }
 }

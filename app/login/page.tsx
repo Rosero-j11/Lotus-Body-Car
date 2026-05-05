@@ -77,7 +77,7 @@ export default function LoginPage() {
 
     if (found) {
       clearLoginAttempts();
-      login({ id: found.id, name: found.name, email: found.email, role: found.role, joinedDate: new Date().toISOString() });
+      login({ id: found.id, name: found.name, email: found.email, rol: found.role, joinedDate: new Date().toISOString() });
       router.push('/');
     } else {
       const updated = recordFailedAttempt();

@@ -7,7 +7,7 @@ export async function middleware(request: NextRequest) {
   await updateSession(request);
   
   const { pathname } = request.nextUrl;
-  const isAuthenticated = request.cookies.get('lotus_auth')?.value === '1';
+  const isAuthenticated = !!request.cookies.get('lotus_auth')?.value;
   const userRole = request.cookies.get('lotus_role')?.value;
 
   // Protect seller routes

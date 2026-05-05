@@ -108,7 +108,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: string;
+  rol: string;
   phone?: string | null;
   address?: string | null;
   avatar?: string | null;
