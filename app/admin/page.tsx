@@ -31,25 +31,25 @@ export default function AdminDashboardPage() {
   const [reportFormat, setReportFormat] = useState('pdf');
   const [reportPeriod, setReportPeriod] = useState('monthly');
 
-  const handleRoleChange = (userId: string, newRole: 'buyer' | 'seller' | 'admin') => {
+  const handleRoleChange = (userId: string, newRole: string) => {
     setPlatformUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u))
+      prev.map((u) => (u.id === userId ? { ...u, rol: newRole } : u))
     );
   };
 
   const handleToggleActive = (userId: string) => {
     setPlatformUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, active: !u.active } : u))
+      prev.map((u) => (u.id === userId ? { ...u, verificado: !u.verificado } : u))
     );
   };
 
   const filteredUsers = platformUsers.filter((u) =>
-    u.name.toLowerCase().includes(userSearch.toLowerCase()) ||
-    u.email.toLowerCase().includes(userSearch.toLowerCase())
+    u.nombre.toLowerCase().includes(userSearch.toLowerCase()) ||
+    u.correo.toLowerCase().includes(userSearch.toLowerCase())
   );
 
   useEffect(() => {
-    if (!isLoading && (!user || user.role !== 'admin')) {
+    if (!isLoading && (!user || user.rol !== 'admin')) {
       router.push('/login');
     }
   }, [user, isLoading, router]);
@@ -62,7 +62,7 @@ export default function AdminDashboardPage() {
     );
   }
 
-  if (!user || user.role !== 'admin') return null;
+  if (!user || user.rol !== 'admin') return null;
 
   const maxSales = Math.max(...adminStats.monthlySales.map((s) => s.sales));
 
@@ -393,18 +393,18 @@ export default function AdminDashboardPage() {
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                       {filteredUsers.map((u) => (
-                        <tr key={u.id} className={`hover:bg-gray-50 ${!u.active ? 'opacity-50' : ''}`}>
+                        <tr key={u.id} className={`hover:bg-gray-50 ${!u.verificado ? 'opacity-50' : ''}`}>
                           <td className="py-3 px-3">
                             <div>
-                              <p className="font-medium">{u.name}</p>
-                              <p className="text-xs text-gray-500">{u.email}</p>
+                              <p className="font-medium">{u.nombre}</p>
+                              <p className="text-xs text-gray-500">{u.correo}</p>
                             </div>
                           </td>
                           <td className="py-3 px-3">
                             <div className="relative inline-block">
                               <select
-                                value={u.role}
-                                onChange={(e) => handleRoleChange(u.id, e.target.value as 'buyer' | 'seller' | 'admin')}
+                                value={u.rol}
+                                onChange={(e) => handleRoleChange(u.id, e.target.value)}
                                 disabled={u.id === user?.id} // No puede cambiar su propio rol
                                 className="border border-gray-200 rounded px-2 py-1 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-red-500 disabled:opacity-60"
                               >
@@ -415,19 +415,19 @@ export default function AdminDashboardPage() {
                             </div>
                           </td>
                           <td className="py-3 px-3">
-                            <span className={`text-xs px-2 py-1 rounded-full ${u.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                              {u.active ? 'Activo' : 'Inactivo'}
+                            <span className={`text-xs px-2 py-1 rounded-full ${u.verificado ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                              {u.verificado ? 'Activo' : 'Inactivo'}
                             </span>
                           </td>
-                          <td className="py-3 px-3 text-gray-500 text-xs">{formatDate(u.joinedDate)}</td>
+                          <td className="py-3 px-3 text-gray-500 text-xs">-</td>
                           <td className="py-3 px-3">
                             <button
                               onClick={() => handleToggleActive(u.id)}
                               disabled={u.id === user?.id}
-                              title={u.active ? 'Desactivar cuenta' : 'Activar cuenta'}
-                              className={`p-1.5 rounded transition disabled:opacity-40 ${u.active ? 'hover:bg-red-50 text-red-600' : 'hover:bg-green-50 text-green-600'}`}
+                              title={u.verificado ? 'Desactivar cuenta' : 'Activar cuenta'}
+                              className={`p-1.5 rounded transition disabled:opacity-40 ${u.verificado ? 'hover:bg-red-50 text-red-600' : 'hover:bg-green-50 text-green-600'}`}
                             >
-                              {u.active ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
+                              {u.verificado ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
                             </button>
                           </td>
                         </tr>
@@ -439,21 +439,21 @@ export default function AdminDashboardPage() {
                 {/* Mobile cards */}
                 <div className="sm:hidden space-y-3">
                   {filteredUsers.map((u) => (
-                    <div key={u.id} className={`bg-gray-50 rounded-lg p-3 ${!u.active ? 'opacity-60' : ''}`}>
+                    <div key={u.id} className={`bg-gray-50 rounded-lg p-3 ${!u.verificado ? 'opacity-60' : ''}`}>
                       <div className="flex justify-between items-start mb-2">
                         <div>
-                          <p className="font-medium text-sm">{u.name}</p>
-                          <p className="text-xs text-gray-500">{u.email}</p>
+                          <p className="font-medium text-sm">{u.nombre}</p>
+                          <p className="text-xs text-gray-500">{u.correo}</p>
                         </div>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${u.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                          {u.active ? 'Activo' : 'Inactivo'}
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${u.verificado ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                          {u.verificado ? 'Activo' : 'Inactivo'}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 mt-2">
                         <Shield className="h-4 w-4 text-gray-400" />
                         <select
-                          value={u.role}
-                          onChange={(e) => handleRoleChange(u.id, e.target.value as 'buyer' | 'seller' | 'admin')}
+                          value={u.rol}
+                          onChange={(e) => handleRoleChange(u.id, e.target.value)}
                           disabled={u.id === user?.id}
                           className="border border-gray-200 rounded px-2 py-1 text-xs bg-white flex-1 focus:outline-none disabled:opacity-60"
                         >
@@ -464,9 +464,9 @@ export default function AdminDashboardPage() {
                         <button
                           onClick={() => handleToggleActive(u.id)}
                           disabled={u.id === user?.id}
-                          className={`p-1.5 rounded border text-xs disabled:opacity-40 ${u.active ? 'border-red-200 text-red-600' : 'border-green-200 text-green-600'}`}
+                          className={`p-1.5 rounded border text-xs disabled:opacity-40 ${u.verificado ? 'border-red-200 text-red-600' : 'border-green-200 text-green-600'}`}
                         >
-                          {u.active ? 'Desactivar' : 'Activar'}
+                          {u.verificado ? 'Desactivar' : 'Activar'}
                         </button>
                       </div>
                     </div>

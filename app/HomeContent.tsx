@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Search, Filter, X, SlidersHorizontal, RotateCcw } from "lucide-react";
-import { mockProducts, brands, categories, modelsByBrand } from "@/lib/data";
+import { mockProducts, brands, categories, modelsByBrand, mockPlatformUsers, mockProductDetails } from "@/lib/data";
 import { formatPrice, debounce } from "@/lib/utils";
 
 const conditions = ["Nuevo", "Usado", "Reacondicionado"];
@@ -141,17 +141,18 @@ function HomeContent() {
       const q = debouncedQuery.toLowerCase();
       const matchesSearch =
         !q ||
-        p.name.toLowerCase().includes(q) ||
-        p.brand.toLowerCase().includes(q) ||
-        p.model.toLowerCase().includes(q) ||
-        p.category.toLowerCase().includes(q);
+        p.nombre.toLowerCase().includes(q) ||
+        p.marca.toLowerCase().includes(q) ||
+        p.modelo.toLowerCase().includes(q) ||
+        p.categoria.toLowerCase().includes(q);
       const matchesBrand =
-        !selectedBrands.length || selectedBrands.includes(p.brand);
-      const matchesModel = !selectedModel || p.model === selectedModel;
+        !selectedBrands.length || selectedBrands.includes(p.marca);
+      const matchesModel = !selectedModel || p.modelo === selectedModel;
       const matchesCat =
-        !selectedCategories.length || selectedCategories.includes(p.category);
+        !selectedCategories.length || selectedCategories.includes(p.categoria);
       const matchesCond =
-        !selectedConditions.length || selectedConditions.includes(p.condition);
+        !selectedConditions.length ||
+        selectedConditions.includes(p.condicion_pieza);
       return (
         matchesSearch &&
         matchesBrand &&
@@ -161,8 +162,13 @@ function HomeContent() {
       );
     })
     .sort((a, b) => {
-      if (sortBy === "price-low") return a.price - b.price;
-      if (sortBy === "price-high") return b.price - a.price;
+      if (sortBy === "price-low") return a.precio - b.precio;
+      if (sortBy === "price-high") return b.precio - a.precio;
+      if (sortBy === "date-new") {
+        const dateA = a.fecha_fabricacion ? new Date(a.fecha_fabricacion).getTime() : 0;
+        const dateB = b.fecha_fabricacion ? new Date(b.fecha_fabricacion).getTime() : 0;
+        return dateB - dateA;
+      }
       return 0;
     });
 
@@ -405,46 +411,56 @@ function HomeContent() {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 lg:gap-5">
-                {filteredProducts.map((product) => (
-                  <div
-                    key={product.id}
-                    onClick={() => router.push(`/products/${product.id}`)}
-                    className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group"
-                  >
-                    <div className="aspect-square relative overflow-hidden bg-gray-100">
-                      <Image
-                        src={product.image}
-                        alt={product.name}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-300"
-                        sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
-                      />
-                      <span className="absolute top-2 right-2 bg-red-600 text-white text-xs px-2 py-0.5 rounded">
-                        {product.condition}
-                      </span>
-                    </div>
-                    <div className="p-3 sm:p-4">
-                      <span className="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded mb-2">
-                        {product.category}
-                      </span>
-                      <h3 className="text-sm sm:text-base font-semibold mb-0.5 line-clamp-1">
-                        {product.name}
-                      </h3>
-                      <p className="text-xs text-gray-500 mb-2">
-                        {product.brand} · {product.model}
-                      </p>
-                      <p className="text-lg sm:text-xl font-bold text-red-600 mb-2">
-                        {formatPrice(product.price)}
-                      </p>
-                      <div className="flex items-center justify-between text-xs text-gray-500">
-                        <span className="truncate max-w-[60%]">
-                          {product.seller}
+                {filteredProducts.map((product) => {
+                  const details = mockProductDetails[product.id];
+                  const seller = mockPlatformUsers.find(
+                    (u) => u.id === product.id_vendedor,
+                  );
+                  const image =
+                    details?.imagenes?.[0] ||
+                    "https://images.unsplash.com/photo-1762139258224-236877b2c571?w=500";
+
+                  return (
+                    <div
+                      key={product.id}
+                      onClick={() => router.push(`/products/${product.id}`)}
+                      className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group"
+                    >
+                      <div className="aspect-square relative overflow-hidden bg-gray-100">
+                        <Image
+                          src={image}
+                          alt={product.nombre}
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                        />
+                        <span className="absolute top-2 right-2 bg-red-600 text-white text-xs px-2 py-0.5 rounded">
+                          {product.condicion_pieza}
                         </span>
-                        <span>{product.location}</span>
+                      </div>
+                      <div className="p-3 sm:p-4">
+                        <span className="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded mb-2">
+                          {product.categoria}
+                        </span>
+                        <h3 className="text-sm sm:text-base font-semibold mb-0.5 line-clamp-1">
+                          {product.nombre}
+                        </h3>
+                        <p className="text-xs text-gray-500 mb-2">
+                          {product.marca} · {product.modelo}
+                        </p>
+                        <p className="text-lg sm:text-xl font-bold text-red-600 mb-2">
+                          {formatPrice(product.precio)}
+                        </p>
+                        <div className="flex items-center justify-between text-xs text-gray-500">
+                          <span className="truncate max-w-[60%]">
+                            {seller?.nombre || "Vendedor"}
+                          </span>
+                          <span>{seller?.direccion || "Colombia"}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
