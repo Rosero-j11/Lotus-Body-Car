@@ -10,6 +10,7 @@ import {
   recordFailedAttempt,
   clearLoginAttempts,
   getLoginAttempts,
+  findRegisteredUser,
 } from '@/lib/utils';
 
 function formatRemainingTime(ms: number): string {
@@ -80,19 +81,26 @@ export default function LoginPage() {
       login({ id: found.id, name: found.name, email: found.email, role: found.role, joinedDate: new Date().toISOString() });
       router.push('/');
     } else {
-      const updated = recordFailedAttempt();
-      const remaining = 3 - updated.count;
-      if (updated.blockedUntil && Date.now() < updated.blockedUntil) {
-        setIsBlocked(true);
-        setBlockedMsg(formatRemainingTime(updated.blockedUntil - Date.now()));
+      // Buscar en usuarios registrados via localStorage
+      const registeredUser = findRegisteredUser(email, password);
+      if (registeredUser) {
+        clearLoginAttempts();
+        login({ id: registeredUser.id, name: registeredUser.name, email: registeredUser.email, role: registeredUser.role, joinedDate: registeredUser.joinedDate });
+        router.push('/');
       } else {
-        setAttemptsLeft(Math.max(0, remaining));
-        // Error genérico — no revela si falló email o contraseña (HU-002)
-        setError(
-          remaining > 0
-            ? `Credenciales incorrectas. Te quedan ${remaining} intento${remaining !== 1 ? 's' : ''}.`
-            : 'Credenciales incorrectas.'
-        );
+        const updated = recordFailedAttempt();
+        const remaining = 3 - updated.count;
+        if (updated.blockedUntil && Date.now() < updated.blockedUntil) {
+          setIsBlocked(true);
+          setBlockedMsg(formatRemainingTime(updated.blockedUntil - Date.now()));
+        } else {
+          setAttemptsLeft(Math.max(0, remaining));
+          setError(
+            remaining > 0
+              ? `Credenciales incorrectas. Te quedan ${remaining} intento${remaining !== 1 ? 's' : ''}.`
+              : 'Credenciales incorrectas.'
+          );
+        }
       }
     }
     setIsSubmitting(false);

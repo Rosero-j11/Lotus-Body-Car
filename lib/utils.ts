@@ -124,3 +124,53 @@ export function validatePassword(password: string): string[] {
   }
   return errors;
 }
+
+// ─── Registered users (mock localStorage store) ───────────────────────────────
+const REGISTERED_USERS_KEY = 'lotus_registered_users';
+
+interface StoredUser {
+  id: string;
+  name: string;
+  email: string;
+  role: 'buyer' | 'seller';
+  phone?: string;
+  joinedDate: string;
+  password: string;
+}
+
+function getRegisteredUsers(): StoredUser[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(REGISTERED_USERS_KEY);
+    return raw ? (JSON.parse(raw) as StoredUser[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveRegisteredUser(user: Omit<StoredUser, never>): void {
+  if (typeof window === 'undefined') return;
+  const users = getRegisteredUsers();
+  const existing = users.findIndex((u) => u.email.toLowerCase() === user.email.toLowerCase());
+  if (existing >= 0) {
+    users[existing] = user;
+  } else {
+    users.push(user);
+  }
+  localStorage.setItem(REGISTERED_USERS_KEY, JSON.stringify(users));
+}
+
+export function findRegisteredUser(email: string, password: string): StoredUser | null {
+  const users = getRegisteredUsers();
+  return users.find((u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password) ?? null;
+}
+
+export function updateRegisteredUserPassword(email: string, newPassword: string): boolean {
+  if (typeof window === 'undefined') return false;
+  const users = getRegisteredUsers();
+  const index = users.findIndex((u) => u.email.toLowerCase() === email.toLowerCase());
+  if (index < 0) return false;
+  users[index].password = newPassword;
+  localStorage.setItem(REGISTERED_USERS_KEY, JSON.stringify(users));
+  return true;
+}

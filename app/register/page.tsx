@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Mail, Lock, Eye, EyeOff, User, Phone, ArrowLeft } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
-import { validatePassword } from '@/lib/utils';
+import { validatePassword, saveRegisteredUser } from '@/lib/utils';
 import { mockRegisteredEmails } from '@/lib/data';
 
 export default function RegisterPage() {
@@ -75,8 +75,11 @@ export default function RegisterPage() {
       name: formData.name,
       email: formData.email,
       role: formData.role,
+      phone: formData.phone,
+      joinedDate: new Date().toISOString(),
     };
 
+    saveRegisteredUser({ ...newUser, password: formData.password });
     login(newUser);
     router.push('/');
   };
