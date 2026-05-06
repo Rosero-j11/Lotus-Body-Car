@@ -538,7 +538,7 @@ export default function PublishProductPage() {
 
                 {specs.length === 0 && (
                   <p className="text-sm text-gray-400 italic text-center py-3 border border-dashed border-gray-200 rounded-md">
-                    Sin especificaciones. Haz clic en "Añadir" para agregar.
+                    Sin especificaciones. Haz clic en &quot;Añadir&quot; para agregar.
                   </p>
                 )}
 

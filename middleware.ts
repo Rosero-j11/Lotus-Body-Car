@@ -10,8 +10,8 @@ export async function middleware(request: NextRequest) {
   const isAuthenticated = !!request.cookies.get('lotus_auth')?.value;
   const userRole = request.cookies.get('lotus_role')?.value;
 
-  // Protect seller routes
-  if (pathname.startsWith('/seller')) {
+  // Protect seller routes (solo dashboard y publish, no perfiles públicos)
+  if (pathname.startsWith('/seller/dashboard') || pathname.startsWith('/seller/publish')) {
     if (!isAuthenticated) {
       return NextResponse.redirect(new URL('/login', request.url));
     }
@@ -53,5 +53,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/seller/:path*', '/admin/:path*', '/cart/:path*', '/profile/:path*', '/login', '/register'],
+  matcher: ['/seller/dashboard/:path*', '/seller/publish/:path*', '/admin/:path*', '/cart/:path*', '/profile/:path*', '/login', '/register'],
 };

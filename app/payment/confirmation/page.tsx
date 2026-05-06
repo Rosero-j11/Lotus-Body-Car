@@ -12,6 +12,7 @@ import {
   Calendar,
   CreditCard,
   MapPin,
+  Star,
 } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useUser } from '@/contexts/UserContext';
@@ -237,6 +238,14 @@ export default function PaymentConfirmationPage() {
   const { cartItems, getSubtotal, getIVA, getTotal, clearCart } = useCart();
   const success = true;
 
+  type SellerRatingState = {
+    score: number;
+    comment: string;
+    submitted: boolean;
+    submitting: boolean;
+    error: string | null;
+  };
+
   type OrderData = {
     items: typeof cartItems;
     subtotal: number;
@@ -247,6 +256,7 @@ export default function PaymentConfirmationPage() {
   };
 
   const [orderData, setOrderData] = useState<OrderData | null>(null);
+  const [sellerRatings, setSellerRatings] = useState<Record<string, SellerRatingState>>({});
 
   useEffect(() => {
     setOrderData({
@@ -257,6 +267,20 @@ export default function PaymentConfirmationPage() {
       orderNumber: generateOrderNumber(),
       transactionId: `TXN-${Math.floor(Math.random() * 900000000 + 100000000)}`,
     });
+
+    // Inicializar estado de calificación por vendedor único
+    const uniqueSellers: Record<string, string> = {};
+    cartItems.forEach((item) => {
+      if (item.sellerId && item.sellerName && !uniqueSellers[item.sellerId]) {
+        uniqueSellers[item.sellerId] = item.sellerName;
+      }
+    });
+    const initialRatings: Record<string, SellerRatingState> = {};
+    Object.keys(uniqueSellers).forEach((sid) => {
+      initialRatings[sid] = { score: 0, comment: '', submitted: false, submitting: false, error: null };
+    });
+    setSellerRatings(initialRatings);
+
     clearCart();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -401,6 +425,99 @@ export default function PaymentConfirmationPage() {
                 <strong>3-5 días hábiles</strong>.
               </p>
             </div>
+
+            {/* Calificar vendedores */}
+            {Object.keys(sellerRatings).length > 0 && (
+              <div className="bg-white rounded-lg shadow p-4 sm:p-6 mb-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
+                  <h2 className="text-lg font-semibold">Califica a los Vendedores</h2>
+                </div>
+                <p className="text-sm text-gray-500 mb-5">Tu opinión ayuda a otros compradores. Puedes calificar ahora o hacerlo más tarde desde tu perfil.</p>
+                <div className="space-y-6">
+                  {orderData.items
+                    .filter((item, idx, arr) => item.sellerId && arr.findIndex((i) => i.sellerId === item.sellerId) === idx)
+                    .map((item) => {
+                      const sid = item.sellerId!;
+                      const rs = sellerRatings[sid];
+                      if (!rs) return null;
+                      return (
+                        <div key={sid} className="border border-gray-100 rounded-lg p-4">
+                          <p className="text-sm font-semibold text-gray-800 mb-3">{item.sellerName ?? 'Vendedor'}</p>
+                          {rs.submitted ? (
+                            <div className="flex items-center gap-2 text-green-700 text-sm font-medium">
+                              <CheckCircle2 className="h-4 w-4" />
+                              ¡Gracias por tu calificación!
+                            </div>
+                          ) : (
+                            <>
+                              {/* Estrellas */}
+                              <div className="flex gap-1 mb-3">
+                                {[1, 2, 3, 4, 5].map((n) => (
+                                  <button
+                                    key={n}
+                                    type="button"
+                                    onClick={() => setSellerRatings((prev) => ({ ...prev, [sid]: { ...prev[sid], score: n } }))}
+                                    className="focus:outline-none"
+                                  >
+                                    <Star
+                                      className={`h-7 w-7 transition-colors ${n <= rs.score ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
+                                    />
+                                  </button>
+                                ))}
+                                <span className="ml-2 text-sm text-gray-500 self-center">
+                                  {rs.score === 0 ? 'Sin calificar' : ['', 'Muy malo', 'Malo', 'Regular', 'Bueno', 'Excelente'][rs.score]}
+                                </span>
+                              </div>
+                              {/* Comentario */}
+                              <textarea
+                                rows={2}
+                                maxLength={300}
+                                placeholder="Comentario opcional..."
+                                value={rs.comment}
+                                onChange={(e) => setSellerRatings((prev) => ({ ...prev, [sid]: { ...prev[sid], comment: e.target.value } }))}
+                                className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-yellow-400 mb-3"
+                              />
+                              {rs.error && <p className="text-xs text-red-600 mb-2">{rs.error}</p>}
+                              <button
+                                type="button"
+                                disabled={rs.score === 0 || rs.submitting}
+                                onClick={async () => {
+                                  setSellerRatings((prev) => ({ ...prev, [sid]: { ...prev[sid], submitting: true, error: null } }));
+                                  try {
+                                    const res = await fetch('/api/ratings', {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({
+                                        sellerId: sid,
+                                        score: rs.score,
+                                        comment: rs.comment,
+                                        orderId: orderData.orderNumber,
+                                      }),
+                                    });
+                                    if (res.ok) {
+                                      setSellerRatings((prev) => ({ ...prev, [sid]: { ...prev[sid], submitted: true, submitting: false } }));
+                                    } else {
+                                      const d = await res.json() as { error?: string };
+                                      setSellerRatings((prev) => ({ ...prev, [sid]: { ...prev[sid], submitting: false, error: d.error ?? 'Error al enviar' } }));
+                                    }
+                                  } catch {
+                                    setSellerRatings((prev) => ({ ...prev, [sid]: { ...prev[sid], submitting: false, error: 'Error de conexión' } }));
+                                  }
+                                }}
+                                className="bg-yellow-400 hover:bg-yellow-500 disabled:opacity-40 text-gray-900 text-sm font-semibold px-4 py-2 rounded-md transition flex items-center gap-1.5"
+                              >
+                                <Star className="h-4 w-4 fill-gray-900" />
+                                {rs.submitting ? 'Enviando...' : 'Enviar calificación'}
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
           </>
         )}
 
