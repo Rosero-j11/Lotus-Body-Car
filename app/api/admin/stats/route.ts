@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/app/utils/supabase/admin';
-import { cookies } from 'next/headers';
 
 function requireAdmin() {
   // Verificación básica de rol desde cookies (el middleware ya protege /admin)
@@ -121,7 +120,7 @@ export async function GET(_req: NextRequest) {
 
   // Obtener primer producto de cada pedido para mostrar en tabla
   const pedidoIds = recentRaw.map((p) => p.numero_pedido);
-  let firstProductNames: Record<string, string> = {};
+  const firstProductNames: Record<string, string> = {};
   if (pedidoIds.length > 0) {
     const { data: artData } = await admin
       .from('articulo_pedido')
