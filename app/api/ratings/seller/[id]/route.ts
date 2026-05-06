@@ -49,13 +49,16 @@ export async function GET(
   }
 
   const ratings = (data ?? []).map((r) => {
-    const u = r.usuario as { nombre: string } | null;
+    const usuarioRaw = r.usuario;
+    const nombre = Array.isArray(usuarioRaw)
+      ? (usuarioRaw[0] as { nombre?: string } | undefined)?.nombre
+      : (usuarioRaw as { nombre?: string } | null)?.nombre;
     return {
       id: r.id,
       score: r.puntaje,
       comment: r.comentario,
       date: r.fecha,
-      buyerName: u?.nombre ?? 'Comprador',
+      buyerName: nombre ?? 'Comprador',
     };
   });
 

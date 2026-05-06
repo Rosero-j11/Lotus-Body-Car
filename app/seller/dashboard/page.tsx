@@ -112,7 +112,7 @@ export default function SellerDashboardPage() {
             image,
             publishDate: p.created_at || new Date().toISOString(),
             history: [],
-            views: p.visitas ?? 0,
+            views: 0,
           };
           }),
         );
