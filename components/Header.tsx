@@ -1,6 +1,8 @@
 ﻿'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
+import logo from '@/app/icon.png';
 import { useRouter } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
 import { ShoppingCart, LayoutDashboard, Plus, Settings, LogOut, UserCircle, Search, X, Clock, ChevronDown } from 'lucide-react';
@@ -97,8 +99,8 @@ export default function Header() {
             href="/"
             className="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity flex-shrink-0"
           >
-            <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 bg-gradient-to-br from-red-600 to-red-800 rounded-full flex items-center justify-center flex-shrink-0">
-              <span className="text-white text-lg sm:text-xl lg:text-2xl font-bold">L</span>
+            <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 flex-shrink-0 relative">
+              <Image src={logo} alt="Lotus Body Car" fill className="object-contain" priority />
             </div>
             <div className="hidden sm:block">
               <h1 className="text-base sm:text-lg lg:text-xl font-bold text-gray-900">

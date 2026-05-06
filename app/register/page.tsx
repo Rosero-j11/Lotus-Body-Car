@@ -75,9 +75,19 @@ export default function RegisterPage() {
       name: formData.name,
       email: formData.email,
       rol: formData.role,
+      phone: formData.phone,
+      joinedDate: new Date().toISOString(),
     };
 
-    saveRegisteredUser({ ...newUser, password: formData.password });
+    saveRegisteredUser({
+      id: newUser.id,
+      name: newUser.name,
+      email: newUser.email,
+      role: formData.role,
+      phone: formData.phone,
+      joinedDate: newUser.joinedDate,
+      password: formData.password,
+    });
     login(newUser);
     router.push('/');
   };

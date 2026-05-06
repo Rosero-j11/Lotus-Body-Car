@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/app/utils/supabase/server';
+import { createAdminClient } from '@/app/utils/supabase/admin';
 import { toUUID } from '@/lib/server-utils';
 
 export async function GET(request: NextRequest) {
@@ -8,10 +9,11 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search') || '';
     const brand = searchParams.get('brand') || '';
     const category = searchParams.get('category') || '';
-    const sellerId = searchParams.get('sellerId') || '';
+    const sellerEmail = searchParams.get('sellerEmail') || '';
     const sort = searchParams.get('sort') || 'relevance';
 
     const supabase = await createClient();
+    const adminSupabase = createAdminClient();
 
     let query = supabase.from('producto').select(`
       *,
@@ -34,8 +36,18 @@ export async function GET(request: NextRequest) {
     if (category) {
       query = query.eq('categoria', category);
     }
-    if (sellerId) {
-      query = query.eq('id_vendedor', toUUID(sellerId));
+    if (sellerEmail) {
+      const { data: sellerData } = await adminSupabase
+        .from('usuario')
+        .select('id')
+        .eq('correo', sellerEmail)
+        .single();
+      if (sellerData) {
+        query = query.eq('id_vendedor', sellerData.id);
+      } else {
+        // El vendedor no existe en la BD, devolver lista vacía
+        return NextResponse.json({ products: [] }, { status: 200 });
+      }
     }
 
     if (sort === 'price-asc') {
@@ -98,7 +110,43 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = await createClient();
-    const id_vendedor = toUUID(authCookie);
+    const adminSupabase = createAdminClient();
+    const userEmail = request.cookies.get('lotus_email')?.value;
+    const userName = decodeURIComponent(request.cookies.get('lotus_name')?.value || '');
+
+    if (!userEmail) {
+      return NextResponse.json({ error: 'No se pudo identificar al vendedor' }, { status: 401 });
+    }
+
+    // Buscar el UUID real del usuario en la tabla usuario de Supabase
+    let { data: userData } = await adminSupabase
+      .from('usuario')
+      .select('id')
+      .eq('correo', userEmail)
+      .single();
+
+    // Si no existe, crear el registro automáticamente (usuario demo / primer acceso)
+    if (!userData) {
+      const { data: newUser, error: insertError } = await adminSupabase
+        .from('usuario')
+        .insert([{
+          nombre: userName || userEmail.split('@')[0],
+          correo: userEmail,
+          rol: roleCookie || 'seller',
+          telefono: '',
+          verificado: false,
+        }])
+        .select('id')
+        .single();
+
+      if (insertError || !newUser) {
+        console.error('[POST /api/products] No se pudo crear el usuario en la BD:', insertError);
+        return NextResponse.json({ error: 'No se pudo registrar el vendedor en la base de datos' }, { status: 500 });
+      }
+      userData = newUser;
+    }
+
+    const id_vendedor = userData.id;
 
     // 1. Insertar producto
     const { data: newProduct, error: productError } = await supabase.from('producto').insert([{

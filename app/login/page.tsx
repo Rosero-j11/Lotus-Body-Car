@@ -85,7 +85,7 @@ export default function LoginPage() {
       const registeredUser = findRegisteredUser(email, password);
       if (registeredUser) {
         clearLoginAttempts();
-        login({ id: registeredUser.id, name: registeredUser.name, email: registeredUser.email, role: registeredUser.role, joinedDate: registeredUser.joinedDate });
+        login({ id: registeredUser.id, name: registeredUser.name, email: registeredUser.email, rol: registeredUser.role, phone: registeredUser.phone, joinedDate: registeredUser.joinedDate });
         router.push('/');
       } else {
         const updated = recordFailedAttempt();

@@ -49,6 +49,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("lotus_user", JSON.stringify(userData));
     setCookie("lotus_auth", userData.id, COOKIE_MAX_AGE);
     setCookie("lotus_role", userData.rol, COOKIE_MAX_AGE);
+    setCookie("lotus_email", userData.email, COOKIE_MAX_AGE);
+    setCookie("lotus_name", encodeURIComponent(userData.name), COOKIE_MAX_AGE);
   };
 
   const logout = (allDevices = false) => {
@@ -60,6 +62,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
     clearCookie("lotus_auth");
     clearCookie("lotus_role");
+    clearCookie("lotus_email");
+    clearCookie("lotus_name");
   };
 
   const updateUser = (data: Partial<User>) => {
@@ -79,6 +83,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setUser(null);
     clearCookie("lotus_auth");
     clearCookie("lotus_role");
+    clearCookie("lotus_email");
+    clearCookie("lotus_name");
   };
 
   return (

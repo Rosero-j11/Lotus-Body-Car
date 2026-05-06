@@ -6,7 +6,7 @@ import { Upload, X, ArrowLeft } from "lucide-react";
 import { useUser } from "@/contexts/UserContext";
 import { brands, categories, modelsByBrand } from "@/lib/data";
 import { formatPrice } from "@/lib/utils";
-import { lotusSuccess } from "@/lib/swal";
+import { lotusSuccess, lotusError } from "@/lib/swal";
 
 interface FormData {
   name: string;
@@ -178,9 +178,13 @@ export default function PublishProductPage() {
       );
       router.push("/seller/dashboard");
     } catch (err: unknown) {
-      setErrors([
-        err instanceof Error ? err.message : "Error al publicar la pieza",
-      ]);
+      const isNetworkError = err instanceof TypeError && err.message.includes('fetch');
+      await lotusError(
+        'No se pudo publicar la pieza',
+        isNetworkError
+          ? 'Verifica tu conexión a internet e intenta de nuevo.'
+          : 'Ocurrió un error inesperado. Por favor intenta de nuevo más tarde.',
+      );
     } finally {
       setIsSubmitting(false);
     }

@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { useUser } from "@/contexts/UserContext";
 import { formatPrice, formatDate } from "@/lib/utils";
-import { lotusWarning, lotusConfirmDanger, toastSuccess } from "@/lib/swal";
+import { lotusWarning, lotusConfirmDanger, lotusError, toastSuccess } from "@/lib/swal";
 import type { SellerProduct, ProductHistory } from "../../../lib/types";
 import type { Producto } from "@/lib/types";
 
@@ -76,7 +76,7 @@ export default function SellerDashboardPage() {
   const fetchSellerProducts = async () => {
     setIsFetching(true);
     try {
-      const response = await fetch(`/api/products?sellerId=${user?.id}`);
+      const response = await fetch(`/api/products?sellerEmail=${encodeURIComponent(user?.email || '')}`);
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`);
       }
@@ -112,7 +112,7 @@ export default function SellerDashboardPage() {
             image,
             publishDate: p.created_at || new Date().toISOString(),
             history: [],
-            views: Math.floor(Math.random() * 200),
+            views: p.visitas ?? 0,
           };
           }),
         );
@@ -235,9 +235,23 @@ export default function SellerDashboardPage() {
     );
     if (!result.isConfirmed) return;
     try {
-      await fetch(`/api/products/${product.id}`, { method: "DELETE" });
+      const res = await fetch(`/api/products/${product.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        console.error("Error deleting product:", errData);
+        await lotusError(
+          "No se pudo eliminar la pieza",
+          "Ocurrió un error al intentar eliminar. Por favor intenta de nuevo.",
+        );
+        return;
+      }
     } catch (err) {
       console.error("Error deleting product:", err);
+      await lotusError(
+        "No se pudo eliminar la pieza",
+        "Verifica tu conexión e intenta de nuevo.",
+      );
+      return;
     }
     setProducts((prev) => prev.filter((p) => p.id !== product.id));
     toastSuccess("Pieza eliminada correctamente");
@@ -306,7 +320,16 @@ export default function SellerDashboardPage() {
           throw new Error(errData.error || "Error al actualizar");
         }
         setProducts((prev) =>
-          prev.map((p) => (p.id === id ? { ...p, ...changes } : p)),
+          prev.map((p) =>
+            p.id === id
+              ? {
+                  ...p,
+                  ...(changes.precio !== undefined && { price: Number(changes.precio) }),
+                  ...(changes.stock !== undefined && { stock: Number(changes.stock) }),
+                  ...(changes.condicion_pieza !== undefined && { condition: String(changes.condicion_pieza) }),
+                }
+              : p,
+          ),
         );
         addHistory(id, "edited", changesDesc.join(", "));
         toastSuccess("Cambios guardados correctamente");

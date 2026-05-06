@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/app/utils/supabase/server';
+import { createAdminClient } from '@/app/utils/supabase/admin';
 import { toUUID } from '@/lib/server-utils';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -56,7 +57,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    const supabase = await createClient();
+    const adminSupabase = createAdminClient();
     const resolvedParams = await params;
     const body = await request.json();
 
@@ -70,10 +71,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return NextResponse.json({ error: 'No hay campos para actualizar' }, { status: 400 });
     }
 
-    const { data: product, error } = await supabase
+    const { data: product, error } = await adminSupabase
       .from('producto')
       .update(updates)
-      .eq('id', toUUID(resolvedParams.id))
+      .eq('id', resolvedParams.id)
       .select()
       .single();
 
@@ -98,12 +99,12 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    const supabase = await createClient();
+    const adminSupabase = createAdminClient();
     const resolvedParams = await params;
     const productId = toUUID(resolvedParams.id);
 
-    await supabase.from('detalle_producto').delete().eq('id_producto', productId);
-    const { error } = await supabase.from('producto').delete().eq('id', productId);
+    await adminSupabase.from('detalle_producto').delete().eq('id_producto', productId);
+    const { error } = await adminSupabase.from('producto').delete().eq('id', productId);
 
     if (error) {
       throw error;

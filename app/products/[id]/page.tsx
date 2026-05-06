@@ -47,6 +47,7 @@ interface ProductDetail {
   stock: number;
   specifications: Record<string, string>;
   status: string;
+  visitas: number;
 }
 
 interface ProductDetailPageProps {
@@ -63,7 +64,6 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   const [activeImg, setActiveImg] = useState(0);
   const [isZoomed, setIsZoomed] = useState(false);
   const [quantity, setQuantity] = useState(1);
-  const [viewCount, setViewCount] = useState(0);
 
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -107,6 +107,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
               string
             >,
             status: dbProd.estado_publicacion ?? "active",
+            visitas: dbProd.visitas ?? 0,
           });
         }
       } catch (error) {
@@ -118,14 +119,10 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
     fetchProduct();
   }, [id]);
 
-  // Contador de vistas (HU-015)
+  // Contador de vistas real en Supabase (fire-and-forget)
   useEffect(() => {
     if (!product) return;
-    const key = `lotus_views_${product.id}`;
-    const prev = parseInt(localStorage.getItem(key) ?? "0", 10);
-    const next = prev + 1;
-    localStorage.setItem(key, String(next));
-    setViewCount(next);
+    fetch(`/api/products/${product.id}/views`, { method: 'POST' }).catch(() => {});
   }, [product?.id]);
 
   const prevImage = () => {
@@ -270,7 +267,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
 
               {/* Contador de vistas */}
               <div className="absolute top-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
-                <Eye className="h-3 w-3" /> {viewCount}
+                <Eye className="h-3 w-3" /> {(product.visitas ?? 0) + 1}
               </div>
             </div>
 
