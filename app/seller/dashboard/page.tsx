@@ -130,7 +130,11 @@ export default function SellerDashboardPage() {
         <div className="animate-pulse text-gray-400">Cargando...</div>
       </div>
     );
-  if (!user || (user.rol !== "seller" && user.rol !== "admin")) return null;
+  if (!user || (user.rol !== "seller" && user.rol !== "admin")) return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600" />
+    </div>
+  );
 
   const statusConfig: Record<string, { label: string; className: string }> = {
     available: {

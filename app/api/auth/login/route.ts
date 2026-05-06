@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createAdminClient } from '@/app/utils/supabase/admin';
 
-// POST /api/auth/login
-// Stub listo para integración con base de datos.
-// Reemplaza la lógica mock con tu ORM/DB favorito (Prisma, Drizzle, etc.)
+// POST /api/auth/login — verifica credenciales en Supabase
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -15,34 +14,40 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: Reemplazar con consulta real a la base de datos
-    // Ejemplo con Prisma:
-    // const user = await prisma.user.findUnique({ where: { email } });
-    // if (!user || !await bcrypt.compare(password, user.passwordHash)) { ... }
+    const normalizedEmail = email.toLowerCase().trim();
+    const adminSupabase = createAdminClient();
 
-    // Mock: simulación de login exitoso
-    const role = email.includes('admin') ? 'admin' : email.includes('seller') ? 'seller' : 'buyer';
-    const mockUser = {
-      id: role === 'admin' ? 'u1' : role === 'seller' ? 'u2' : 'u3',
-      name: 'Usuario Demo',
-      email,
+    const { data: dbUser, error } = await adminSupabase
+      .from('usuario')
+      .select('id, nombre, correo, rol, telefono, fecha_registro')
+      .eq('correo', normalizedEmail)
+      .eq('contrasena', password)
+      .single();
+
+    if (error || !dbUser) {
+      return NextResponse.json({ error: 'Credenciales incorrectas' }, { status: 401 });
+    }
+
+    const role = dbUser.rol as 'buyer' | 'seller' | 'admin';
+    const user = {
+      id: String(dbUser.id),
+      name: dbUser.nombre,
+      email: dbUser.correo,
       role,
-      phone: '+57 300 123 4567',
-      joinedDate: new Date().toISOString(),
+      phone: dbUser.telefono ?? '',
+      joinedDate: dbUser.fecha_registro ?? new Date().toISOString(),
     };
 
-    const response = NextResponse.json({ user: mockUser }, { status: 200 });
+    const response = NextResponse.json({ user }, { status: 200 });
 
-    // Setear cookies HttpOnly para mayor seguridad en producción
-    // Por ahora usamos cookies accesibles client-side para el middleware
-    response.cookies.set('lotus_auth', mockUser.id, {
+    response.cookies.set('lotus_auth', user.id, {
       httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 días
+      maxAge: 60 * 60 * 24 * 7,
       path: '/',
     });
-    response.cookies.set('lotus_role', mockUser.role, {
+    response.cookies.set('lotus_role', role, {
       httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -55,3 +60,4 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
+

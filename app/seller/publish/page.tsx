@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Upload, X, ArrowLeft } from "lucide-react";
+import { Upload, X, ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { useUser } from "@/contexts/UserContext";
 import { brands, categories, modelsByBrand } from "@/lib/data";
 import { formatPrice } from "@/lib/utils";
@@ -39,6 +39,12 @@ export default function PublishProductPage() {
   const [images, setImages] = useState<string[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [specs, setSpecs] = useState<{ key: string; value: string }[]>([]);
+
+  const addSpec = () => setSpecs((prev) => [...prev, { key: '', value: '' }]);
+  const removeSpec = (i: number) => setSpecs((prev) => prev.filter((_, idx) => idx !== i));
+  const updateSpec = (i: number, field: 'key' | 'value', val: string) =>
+    setSpecs((prev) => prev.map((s, idx) => idx === i ? { ...s, [field]: val } : s));
 
   useEffect(() => {
     if (
@@ -57,7 +63,11 @@ export default function PublishProductPage() {
     );
   }
 
-  if (!user || (user.rol !== "seller" && user.rol !== "admin")) return null;
+  if (!user || (user.rol !== "seller" && user.rol !== "admin")) return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600" />
+    </div>
+  );
 
   const updateField = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({
@@ -162,6 +172,11 @@ export default function PublishProductPage() {
               : [
                   "https://images.unsplash.com/photo-1486496146582-9ffcd0b2b2b7?w=800",
                 ],
+          especificaciones: Object.fromEntries(
+            specs
+              .filter((s) => s.key.trim() && s.value.trim())
+              .map((s) => [s.key.trim(), s.value.trim()])
+          ),
         }),
       });
 
@@ -501,6 +516,59 @@ export default function PublishProductPage() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
                     />
                   </div>
+                </div>
+              </div>
+
+              {/* Especificaciones Técnicas */}
+              <div className="bg-white rounded-lg shadow p-4 sm:p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold">Especificaciones Técnicas</h2>
+                  <button
+                    type="button"
+                    onClick={addSpec}
+                    className="inline-flex items-center gap-1.5 text-sm text-red-600 hover:text-red-700 font-medium"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Añadir
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 -mt-2">
+                  Ej: Potencia → 450 HP, Peso → 12 kg, Material → Acero inoxidable
+                </p>
+
+                {specs.length === 0 && (
+                  <p className="text-sm text-gray-400 italic text-center py-3 border border-dashed border-gray-200 rounded-md">
+                    Sin especificaciones. Haz clic en "Añadir" para agregar.
+                  </p>
+                )}
+
+                <div className="space-y-2">
+                  {specs.map((spec, i) => (
+                    <div key={i} className="flex gap-2 items-center">
+                      <input
+                        type="text"
+                        placeholder="Nombre (ej: Potencia)"
+                        value={spec.key}
+                        onChange={(e) => updateSpec(i, 'key', e.target.value)}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Valor (ej: 450 HP)"
+                        value={spec.value}
+                        onChange={(e) => updateSpec(i, 'value', e.target.value)}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeSpec(i)}
+                        className="p-2 text-gray-400 hover:text-red-600 transition"
+                        aria-label="Eliminar especificación"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
               </div>
 

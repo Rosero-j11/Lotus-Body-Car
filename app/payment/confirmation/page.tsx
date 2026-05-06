@@ -14,8 +14,8 @@ import {
   MapPin,
 } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
+import { useUser } from '@/contexts/UserContext';
 import { formatPrice, formatDateLong } from '@/lib/utils';
-import { toastInfo } from '@/lib/swal';
 
 function generateOrderNumber(): string {
   const now = new Date();
@@ -26,23 +26,248 @@ function generateOrderNumber(): string {
   return `LBC-${y}-${m}-${d}-${rand}`;
 }
 
+async function downloadInvoicePDF(orderData: {
+  items: { id: string; name: string; brand: string; model?: string; price: number; quantity: number }[];
+  subtotal: number;
+  iva: number;
+  total: number;
+  orderNumber: string;
+  transactionId: string;
+}, customerName: string, customerEmail: string) {
+  const { jsPDF } = await import('jspdf');
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+  const W = doc.internal.pageSize.getWidth();
+  const red: [number, number, number] = [185, 28, 28];
+  const dark: [number, number, number] = [17, 24, 39];
+  const gray: [number, number, number] = [107, 114, 128];
+  const lightGray: [number, number, number] = [243, 244, 246];
+  const white: [number, number, number] = [255, 255, 255];
+
+  // ── Encabezado rojo ──────────────────────────────────────────────
+  doc.setFillColor(...red);
+  doc.rect(0, 0, W, 42, 'F');
+
+  // Nombre empresa
+  doc.setTextColor(...white);
+  doc.setFontSize(22);
+  doc.setFont('helvetica', 'bold');
+  doc.text('LOTUS BODY CAR', 14, 18);
+
+  // Subtítulo
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Piezas Automotrices Premium', 14, 25);
+  doc.text('NIT: 900.123.456-7 | contacto@lotusbodycar.com', 14, 31);
+  doc.text('Bogotá, Colombia', 14, 37);
+
+  // Etiqueta FACTURA
+  doc.setFontSize(18);
+  doc.setFont('helvetica', 'bold');
+  doc.text('FACTURA', W - 14, 22, { align: 'right' });
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`No. ${orderData.orderNumber}`, W - 14, 30, { align: 'right' });
+
+  // Banda decorativa inferior del header
+  doc.setFillColor(153, 27, 27);
+  doc.rect(0, 42, W, 3, 'F');
+
+  // ── Datos del cliente y orden ─────────────────────────────────────
+  let y = 55;
+
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...dark);
+  doc.text('DATOS DEL CLIENTE', 14, y);
+  doc.text('INFORMACIÓN DE LA ORDEN', W / 2 + 5, y);
+
+  y += 6;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(...gray);
+
+  const dateStr = new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  const clientLines = [
+    ['Cliente:', customerName || 'Cliente Lotus Body Car'],
+    ['Correo:', customerEmail || '—'],
+    ['Método de pago:', 'Tarjeta Crédito (Visa **** 4242)'],
+  ];
+  const orderLines = [
+    ['Fecha:', dateStr],
+    ['Orden:', orderData.orderNumber],
+    ['Transacción:', orderData.transactionId],
+  ];
+
+  clientLines.forEach(([label, value]) => {
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...dark);
+    doc.text(label, 14, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...gray);
+    doc.text(value, 38, y);
+    y += 6;
+  });
+
+  let y2 = 61;
+  orderLines.forEach(([label, value]) => {
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...dark);
+    doc.text(label, W / 2 + 5, y2);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...gray);
+    doc.text(value, W / 2 + 30, y2);
+    y2 += 6;
+  });
+
+  y = Math.max(y, y2) + 6;
+
+  // ── Línea separadora ──────────────────────────────────────────────
+  doc.setDrawColor(...red);
+  doc.setLineWidth(0.5);
+  doc.line(14, y, W - 14, y);
+  y += 6;
+
+  // ── Tabla de productos ────────────────────────────────────────────
+  doc.setFillColor(...red);
+  doc.rect(14, y, W - 28, 8, 'F');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(...white);
+  doc.text('PRODUCTO', 17, y + 5.5);
+  doc.text('MARCA / MODELO', 90, y + 5.5);
+  doc.text('CANT.', 140, y + 5.5);
+  doc.text('PRECIO UNIT.', 153, y + 5.5);
+  doc.text('TOTAL', W - 17, y + 5.5, { align: 'right' });
+
+  y += 10;
+
+  orderData.items.forEach((item, idx) => {
+    if (idx % 2 === 0) {
+      doc.setFillColor(...lightGray);
+      doc.rect(14, y - 2, W - 28, 8, 'F');
+    }
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(...dark);
+
+    // Nombre del producto (truncado si es muy largo)
+    const name = item.name.length > 28 ? item.name.substring(0, 27) + '…' : item.name;
+    doc.text(name, 17, y + 4);
+    doc.setTextColor(...gray);
+    const modelText = `${item.brand}${item.model ? ` • ${item.model}` : ''}`;
+    const modelTrunc = modelText.length > 22 ? modelText.substring(0, 21) + '…' : modelText;
+    doc.text(modelTrunc, 90, y + 4);
+    doc.setTextColor(...dark);
+    doc.text(String(item.quantity), 143, y + 4);
+    doc.text(formatPrice(item.price), 153, y + 4);
+    doc.text(formatPrice(item.price * item.quantity), W - 17, y + 4, { align: 'right' });
+    y += 9;
+  });
+
+  y += 4;
+
+  // ── Línea separadora ──────────────────────────────────────────────
+  doc.setDrawColor(lightGray[0], lightGray[1], lightGray[2]);
+  doc.setLineWidth(0.3);
+  doc.line(14, y, W - 14, y);
+  y += 6;
+
+  // ── Totales ───────────────────────────────────────────────────────
+  const colLabel = W - 70;
+  const colValue = W - 14;
+
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(...gray);
+  doc.text('Subtotal:', colLabel, y);
+  doc.text(formatPrice(orderData.subtotal), colValue, y, { align: 'right' });
+  y += 7;
+
+  doc.text('IVA (19%):', colLabel, y);
+  doc.text(formatPrice(orderData.iva), colValue, y, { align: 'right' });
+  y += 7;
+
+  doc.text('Envío:', colLabel, y);
+  doc.setTextColor(22, 163, 74);
+  doc.text('GRATIS', colValue, y, { align: 'right' });
+  y += 3;
+
+  doc.setDrawColor(...red);
+  doc.setLineWidth(0.5);
+  doc.line(colLabel - 2, y, W - 14, y);
+  y += 5;
+
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...dark);
+  doc.text('TOTAL PAGADO:', colLabel, y);
+  doc.setTextColor(...red);
+  doc.text(formatPrice(orderData.total), colValue, y, { align: 'right' });
+  y += 12;
+
+  // ── Sello de estado ───────────────────────────────────────────────
+  doc.setDrawColor(22, 163, 74);
+  doc.setLineWidth(1.2);
+  doc.roundedRect(14, y, 55, 14, 2, 2, 'D');
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(22, 163, 74);
+  doc.text('✓ PAGADO', 41, y + 9, { align: 'center' });
+
+  // ── Pie de página ─────────────────────────────────────────────────
+  const pageH = doc.internal.pageSize.getHeight();
+  doc.setFillColor(...red);
+  doc.rect(0, pageH - 18, W, 18, 'F');
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(...white);
+  doc.text('Lotus Body Car — Piezas Automotrices Premium', W / 2, pageH - 10, { align: 'center' });
+  doc.text('Este documento es una factura electrónica válida como comprobante de compra.', W / 2, pageH - 5, { align: 'center' });
+
+  doc.save(`Factura-${orderData.orderNumber}.pdf`);
+}
+
 export default function PaymentConfirmationPage() {
   const router = useRouter();
+  const { user } = useUser();
   const { cartItems, getSubtotal, getIVA, getTotal, clearCart } = useCart();
   const success = true;
 
-  const [orderData] = useState(() => ({
-    items: [...cartItems],
-    subtotal: getSubtotal(),
-    iva: getIVA(),
-    total: getTotal(),
-    orderNumber: generateOrderNumber(),
-    transactionId: `TXN-${Math.floor(Math.random() * 900000000 + 100000000)}`,
-  }));
+  type OrderData = {
+    items: typeof cartItems;
+    subtotal: number;
+    iva: number;
+    total: number;
+    orderNumber: string;
+    transactionId: string;
+  };
+
+  const [orderData, setOrderData] = useState<OrderData | null>(null);
 
   useEffect(() => {
+    setOrderData({
+      items: [...cartItems],
+      subtotal: getSubtotal(),
+      iva: getIVA(),
+      total: getTotal(),
+      orderNumber: generateOrderNumber(),
+      transactionId: `TXN-${Math.floor(Math.random() * 900000000 + 100000000)}`,
+    });
     clearCart();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  if (!orderData) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -191,7 +416,7 @@ export default function PaymentConfirmationPage() {
 
           {success ? (
             <button
-              onClick={() => toastInfo('Preparando descarga de factura electrónica...')}
+              onClick={() => downloadInvoicePDF(orderData, user?.name ?? '', user?.email ?? '')}
               className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-md py-3 text-sm font-medium flex items-center justify-center gap-2"
             >
               <Download className="h-4 w-4" />

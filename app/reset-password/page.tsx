@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Lock, Eye, EyeOff, CheckCircle2, XCircle, ArrowLeft } from 'lucide-react';
-import { validateResetToken, consumeResetToken, validatePassword, updateRegisteredUserPassword } from '@/lib/utils';
+import { validatePassword, updateRegisteredUserPassword } from '@/lib/utils';
 
 function ResetPasswordForm() {
   const router = useRouter();
@@ -26,15 +26,20 @@ function ResetPasswordForm() {
       setTokenStatus('invalid');
       return;
     }
-    const result = validateResetToken(token);
-    if (result.valid) {
-      setTokenStatus('valid');
-      setTokenEmail(result.email ?? '');
-    } else if (result.reason === 'expired') {
-      setTokenStatus('expired');
-    } else {
-      setTokenStatus('invalid');
-    }
+    // Validar token en el servidor
+    fetch(`/api/auth/reset-password?token=${encodeURIComponent(token)}`)
+      .then((r) => r.json())
+      .then((data: { valid: boolean; email?: string; reason?: string }) => {
+        if (data.valid && data.email) {
+          setTokenStatus('valid');
+          setTokenEmail(data.email);
+        } else if (data.reason === 'expired') {
+          setTokenStatus('expired');
+        } else {
+          setTokenStatus('invalid');
+        }
+      })
+      .catch(() => setTokenStatus('invalid'));
   }, [token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -51,15 +56,29 @@ function ResetPasswordForm() {
     }
 
     setIsSubmitting(true);
-    await new Promise((r) => setTimeout(r, 500));
+    try {
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, newPassword: password }),
+      });
 
-    // Actualizar la contraseña del usuario registrado en localStorage
-    updateRegisteredUserPassword(tokenEmail, password);
-    consumeResetToken();
-    setSuccess(true);
-    setIsSubmitting(false);
+      const data = await res.json() as { success?: boolean; email?: string; error?: string };
 
-    setTimeout(() => router.push('/login'), 3000);
+      if (!res.ok) throw new Error(data.error || 'Error al actualizar');
+
+      // Actualizar también en localStorage (para usuarios registrados localmente)
+      if (data.email) {
+        updateRegisteredUserPassword(data.email, password);
+      }
+
+      setSuccess(true);
+      setTimeout(() => router.push('/login'), 3000);
+    } catch (err) {
+      setFieldErrors({ password: err instanceof Error ? err.message : 'Error inesperado' });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Token inválido

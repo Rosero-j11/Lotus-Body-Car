@@ -88,6 +88,24 @@ export default function LoginPage() {
         login({ id: registeredUser.id, name: registeredUser.name, email: registeredUser.email, rol: registeredUser.role, phone: registeredUser.phone, joinedDate: registeredUser.joinedDate });
         router.push('/');
       } else {
+        // Verificar contra Supabase (usuarios con contraseña restablecida o registrados en DB)
+        try {
+          const apiRes = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+          });
+          const apiData = await apiRes.json() as { user?: { id: string; name: string; email: string; role: 'buyer' | 'seller' | 'admin'; phone?: string; joinedDate: string }; error?: string };
+          if (apiRes.ok && apiData.user) {
+            clearLoginAttempts();
+            login({ id: apiData.user.id, name: apiData.user.name, email: apiData.user.email, rol: apiData.user.role, phone: apiData.user.phone, joinedDate: apiData.user.joinedDate });
+            router.push('/');
+            return;
+          }
+        } catch {
+          // Si la API falla, continuar con el error normal
+        }
+
         const updated = recordFailedAttempt();
         const remaining = 3 - updated.count;
         if (updated.blockedUntil && Date.now() < updated.blockedUntil) {

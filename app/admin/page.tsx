@@ -65,7 +65,11 @@ export default function AdminDashboardPage() {
     );
   }
 
-  if (!user || user.rol !== "admin") return null;
+  if (!user || user.rol !== "admin") return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600" />
+    </div>
+  );
 
   const maxSales = Math.max(...adminStats.monthlySales.map((s) => s.sales));
 

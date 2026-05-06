@@ -98,7 +98,8 @@ export async function POST(request: NextRequest) {
       precio, 
       stock,
       descripcion,
-      imagenes
+      imagenes,
+      especificaciones
     } = body;
 
     if (!nombre || !marca || !categoria || !condicion_pieza || !anio || !precio) {
@@ -171,7 +172,7 @@ export async function POST(request: NextRequest) {
       id_producto: newProduct.id,
       descripcion: descripcion || '',
       imagenes: imagenes || [],
-      especificaciones: {}
+      especificaciones: (especificaciones && typeof especificaciones === 'object') ? especificaciones : {}
     }]);
 
     if (detailError) {

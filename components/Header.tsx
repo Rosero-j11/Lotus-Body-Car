@@ -4,30 +4,11 @@ import Link from 'next/link';
 import Image from 'next/image';
 import logo from '@/app/icon.png';
 import { useRouter } from 'next/navigation';
-import { useState, useRef, useEffect } from 'react';
-import { ShoppingCart, LayoutDashboard, Plus, Settings, LogOut, UserCircle, Search, X, Clock, ChevronDown } from 'lucide-react';
+import { useState } from 'react';
+import { ShoppingCart, LayoutDashboard, Plus, Settings, LogOut, UserCircle, ChevronDown } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { useCart } from '@/contexts/CartContext';
 
-const SEARCH_HISTORY_KEY = 'lotus_search_history';
-const MAX_HISTORY = 5;
-
-function getSearchHistory(): string[] {
-  if (typeof window === 'undefined') return [];
-  try { return JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY) ?? '[]'); } catch { return []; }
-}
-
-function saveToHistory(term: string) {
-  const trimmed = term.trim();
-  if (!trimmed) return;
-  const prev = getSearchHistory().filter((h) => h !== trimmed);
-  const next = [trimmed, ...prev].slice(0, MAX_HISTORY);
-  localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(next));
-}
-
-function clearHistory() {
-  localStorage.removeItem(SEARCH_HISTORY_KEY);
-}
 
 const roleLabels: Record<string, string> = {
   buyer: 'Comprador',
@@ -40,49 +21,6 @@ export default function Header() {
   const { itemCount } = useCart();
   const router = useRouter();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
-  // Búsqueda global (HU-013)
-  const [searchInput, setSearchInput] = useState('');
-  const [isSearchOpen, setIsSearchOpen] = useState(false); // móvil toggle
-  const [showHistory, setShowHistory] = useState(false);
-  const [history, setHistory] = useState<string[]>([]);
-  const searchRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => { setHistory(getSearchHistory()); }, []);
-
-  // Cerrar dropdown al clicar fuera
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
-        setShowHistory(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
-
-  const handleSearch = (term: string) => {
-    const q = (term ?? searchInput).trim();
-    if (!q) return;
-    saveToHistory(q);
-    setHistory(getSearchHistory());
-    setShowHistory(false);
-    setSearchInput(q);
-    setIsSearchOpen(false);
-    router.push(`/?q=${encodeURIComponent(q)}`);
-  };
-
-  const handleHistoryClick = (term: string) => {
-    setSearchInput(term);
-    handleSearch(term);
-  };
-
-  const handleClearHistory = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    clearHistory();
-    setHistory([]);
-  };
 
   const handleLogout = () => {
     logout();
@@ -110,61 +48,8 @@ export default function Header() {
             </div>
           </Link>
 
-          {/* Global Search Bar — Desktop (HU-013) */}
-          <div ref={searchRef} className="hidden md:flex flex-1 max-w-md lg:max-w-xl relative mx-2">
-            <div className="flex w-full items-center border border-gray-300 rounded-lg bg-gray-50 focus-within:bg-white focus-within:border-red-400 focus-within:ring-1 focus-within:ring-red-300 transition">
-              <Search className="h-4 w-4 text-gray-400 ml-3 flex-shrink-0" />
-              <input
-                ref={inputRef}
-                type="text"
-                value={searchInput}
-                placeholder="Buscar piezas, marcas, modelos..."
-                onChange={(e) => setSearchInput(e.target.value)}
-                onFocus={() => { setHistory(getSearchHistory()); setShowHistory(true); }}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch(searchInput)}
-                className="flex-1 px-2 py-2 text-sm bg-transparent border-0 focus:outline-none"
-                autoComplete="off"
-              />
-              {searchInput && (
-                <button onClick={() => setSearchInput('')} className="mr-1 p-1 text-gray-400 hover:text-gray-600">
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              )}
-              <button onClick={() => handleSearch(searchInput)}
-                className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-r-lg text-sm font-medium transition">
-                Buscar
-              </button>
-            </div>
-
-            {/* Historial de búsquedas (HU-013) */}
-            {showHistory && history.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-                <div className="flex items-center justify-between px-3 py-2 border-b">
-                  <span className="text-xs text-gray-500 font-medium">Búsquedas recientes</span>
-                  <button onClick={handleClearHistory} className="text-xs text-gray-400 hover:text-gray-600">Limpiar</button>
-                </div>
-                {history.map((term, i) => (
-                  <button key={i} onMouseDown={() => handleHistoryClick(term)}
-                    className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-gray-50 text-left">
-                    <Clock className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
-                    {term}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
           {/* Right actions */}
           <div className="flex items-center gap-1 sm:gap-2">
-            {/* Mobile Search Toggle (HU-013) */}
-            <button
-              onClick={() => { setIsSearchOpen(!isSearchOpen); if (!isSearchOpen) setTimeout(() => inputRef.current?.focus(), 50); }}
-              className="md:hidden p-2 rounded-md hover:bg-gray-100 transition"
-              aria-label="Buscar"
-            >
-              <Search className="h-4 w-4" />
-            </button>
-
             {user ? (
               <>
                 <Link href="/cart"
@@ -265,50 +150,6 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Mobile Search Bar expandible (HU-013) */}
-        {isSearchOpen && (
-          <div ref={searchRef} className="md:hidden mt-2 pb-1 relative">
-            <div className="flex items-center border border-gray-300 rounded-lg bg-gray-50 focus-within:bg-white focus-within:border-red-400">
-              <Search className="h-4 w-4 text-gray-400 ml-3 flex-shrink-0" />
-              <input
-                ref={inputRef}
-                type="text"
-                value={searchInput}
-                placeholder="Buscar piezas..."
-                onChange={(e) => setSearchInput(e.target.value)}
-                onFocus={() => { setHistory(getSearchHistory()); setShowHistory(true); }}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch(searchInput)}
-                className="flex-1 px-2 py-2 text-sm bg-transparent border-0 focus:outline-none"
-                autoComplete="off"
-              />
-              {searchInput && (
-                <button onClick={() => setSearchInput('')} className="mr-1 p-1 text-gray-400">
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              )}
-              <button onClick={() => handleSearch(searchInput)}
-                className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-r-lg text-sm font-medium">
-                OK
-              </button>
-            </div>
-
-            {showHistory && history.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-                <div className="flex items-center justify-between px-3 py-2 border-b">
-                  <span className="text-xs text-gray-500 font-medium">Búsquedas recientes</span>
-                  <button onClick={handleClearHistory} className="text-xs text-gray-400 hover:text-gray-600">Limpiar</button>
-                </div>
-                {history.map((term, i) => (
-                  <button key={i} onMouseDown={() => handleHistoryClick(term)}
-                    className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-gray-50 text-left">
-                    <Clock className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
-                    {term}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </header>
   );
