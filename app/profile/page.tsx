@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { User, Mail, Phone, MapPin, Camera, Save, LogOut, Trash2, Eye, EyeOff, AlertTriangle } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Camera, Save, LogOut, Trash2, Eye, EyeOff, AlertTriangle, Star } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { toastSuccess, lotusConfirmDanger } from '@/lib/swal';
 
@@ -12,6 +12,14 @@ interface FieldErrors {
   email?: string;
   emailPassword?: string;
   currentPasswordForDelete?: string;
+}
+
+interface SellerRating {
+  id: string;
+  score: number;
+  comment: string | null;
+  date: string;
+  buyerName: string;
 }
 
 export default function ProfilePage() {
@@ -26,6 +34,11 @@ export default function ProfilePage() {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [isSaving, setIsSaving] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+
+  // Calificaciones recibidas (vendedores)
+  const [ratings, setRatings] = useState<SellerRating[]>([]);
+  const [ratingsAvg, setRatingsAvg] = useState<number | null>(null);
+  const [ratingsLoading, setRatingsLoading] = useState(false);
 
   // Modal eliminar cuenta (HU-006)
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -44,6 +57,20 @@ export default function ProfilePage() {
       setNewEmail(user.email);
       setAvatarPreview(user.avatar ?? null);
     }
+  }, [user]);
+
+  // Cargar calificaciones si es vendedor
+  useEffect(() => {
+    if (!user || user.rol !== 'seller') return;
+    setRatingsLoading(true);
+    fetch(`/api/ratings/seller/${user.id}`)
+      .then((r) => r.json())
+      .then((data: { ratings?: SellerRating[]; average?: number | null }) => {
+        setRatings(data.ratings ?? []);
+        setRatingsAvg(data.average ?? null);
+      })
+      .catch(() => {})
+      .finally(() => setRatingsLoading(false));
   }, [user]);
 
   if (isLoading || !user) return (
@@ -261,9 +288,81 @@ export default function ProfilePage() {
           </button>
         </form>
 
+        {/* Calificaciones recibidas — solo vendedores */}
+        {user.rol === 'seller' && (
+          <div className="bg-white rounded-lg shadow-sm p-6 mb-4">
+            <div className="flex items-center gap-2 border-b pb-3 mb-4">
+              <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
+              <h2 className="text-lg font-semibold text-gray-800">Mis Calificaciones</h2>
+            </div>
+
+            {/* Promedio */}
+            <div className="flex items-center gap-4 mb-5">
+              <div className="text-center">
+                <p className="text-4xl font-bold text-gray-900">
+                  {ratingsAvg !== null ? ratingsAvg.toFixed(1) : '—'}
+                </p>
+                <div className="flex gap-0.5 justify-center mt-1">
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <Star
+                      key={n}
+                      className={`h-4 w-4 ${ratingsAvg && n <= Math.round(ratingsAvg) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'}`}
+                    />
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">{ratings.length} {ratings.length === 1 ? 'calificación' : 'calificaciones'}</p>
+              </div>
+              {/* Barras de distribución */}
+              <div className="flex-1 space-y-1">
+                {[5, 4, 3, 2, 1].map((n) => {
+                  const count = ratings.filter((r) => r.score === n).length;
+                  const pct = ratings.length > 0 ? (count / ratings.length) * 100 : 0;
+                  return (
+                    <div key={n} className="flex items-center gap-2">
+                      <span className="text-xs text-gray-500 w-2">{n}</span>
+                      <Star className="h-3 w-3 text-yellow-400 fill-yellow-400 flex-shrink-0" />
+                      <div className="flex-1 bg-gray-100 rounded-full h-2">
+                        <div className="bg-yellow-400 h-2 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                      </div>
+                      <span className="text-xs text-gray-400 w-4">{count}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Lista de calificaciones */}
+            {ratingsLoading ? (
+              <div className="flex justify-center py-6">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-yellow-500" />
+              </div>
+            ) : ratings.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-6">Aún no has recibido calificaciones.</p>
+            ) : (
+              <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+                {ratings.map((r) => (
+                  <div key={r.id} className="border border-gray-100 rounded-lg p-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-medium text-gray-800">{r.buyerName}</span>
+                      <div className="flex gap-0.5">
+                        {[1, 2, 3, 4, 5].map((n) => (
+                          <Star key={n} className={`h-3.5 w-3.5 ${n <= r.score ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'}`} />
+                        ))}
+                      </div>
+                    </div>
+                    {r.comment && <p className="text-sm text-gray-600">{r.comment}</p>}
+                    <p className="text-xs text-gray-400 mt-1">
+                      {new Date(r.date).toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* HU-005: Cierre de sesión */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-4">
-          <h2 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">Sesión</h2>
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-4">          <h2 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">Sesión</h2>
           <p className="text-sm text-gray-600 mb-3">Cierra tu sesión solo en este dispositivo o en todos los dispositivos simultáneamente.</p>
           <div className="flex flex-col sm:flex-row gap-3">
             <button onClick={() => { logout(); router.push('/login'); }}

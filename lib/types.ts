@@ -102,6 +102,8 @@ export interface CartItem {
   quantity: number;
   stock: number;
   image: string;
+  sellerId?: string;
+  sellerName?: string;
 }
 
 export interface User {

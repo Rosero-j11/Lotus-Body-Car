@@ -36,6 +36,7 @@ interface ProductDetail {
   condition: string;
   description: string;
   images: string[];
+  sellerId: string;
   sellerInfo: {
     name: string;
     rating: number;
@@ -93,6 +94,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
               : [
                   "https://images.unsplash.com/photo-1762139258224-236877b2c571?w=500",
                 ],
+            sellerId: dbProd.id_vendedor ?? '',
             sellerInfo: {
               name: seller?.nombre ?? "Vendedor Anónimo",
               rating: seller?.reputacion ?? 4.5,
@@ -175,6 +177,8 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
       quantity,
       stock: product.stock,
       image: product.images[0],
+      sellerId: product.sellerId,
+      sellerName: product.sellerInfo.name,
     });
     toastSuccess(`¡${quantity} unidad(es) agregada(s) al carrito!`);
   };
@@ -362,9 +366,12 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                     <span>{product.location}</span>
                   </div>
                 </div>
-                <button className="border rounded-md px-4 py-2 hover:bg-gray-50 text-xs sm:text-sm w-full sm:w-auto">
+                <Link
+                  href={`/seller/${product.sellerId}`}
+                  className="border rounded-md px-4 py-2 hover:bg-gray-50 text-xs sm:text-sm w-full sm:w-auto text-center"
+                >
                   Ver perfil
-                </button>
+                </Link>
               </div>
             </div>
 
