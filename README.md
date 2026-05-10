@@ -2,7 +2,7 @@
 
 This repository contains the source code for the official landing page of Lotus Body Car, a premier automotive detailing and aesthetic center. The site is designed to showcase high-end vehicle care services, providing a professional digital presence for car enthusiasts and clients seeking premium maintenance.
 
-![HomePage](Mockup.png)
+![HomePage](design/Mockup.png)
 
 # Live Site
 https://lotus-body-car.vercel.app/
