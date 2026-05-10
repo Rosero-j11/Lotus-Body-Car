@@ -1,26 +1,26 @@
 # Lotus Body Car - Professional Auto Detailing Landing Page
 
-This repository contains the source code for the official landing page of Lotus Body Car, a premier automotive detailing and aesthetic center. The site is designed to showcase high-end vehicle care services, providing a professional digital presence for car enthusiasts and clients seeking premium maintenance.
+This repository contains the source code for Lotus Body Car, a project to simulate a digital platform designed for the buying and selling of high-end luxury vehicle components in Colombia. By connecting users directly, the system eliminates unreliable intermediaries and promotes a transparent, efficient electronic commerce environment for the automotive industry.
 
 ![HomePage](design/Mockup.png)
 
 # Live Site
 https://lotus-body-car.vercel.app/
 
-# About the Project
-Lotus Body Car specializes in professional vehicle restoration and protection. This website serves as a portfolio and service catalog, allowing clients to explore specialized detailing treatments, view high-quality results, and book appointments for their vehicles.
+# Project Overview
+Lotus Body Car is a Consumer-to-Consumer (CToC) system that addresses the fragmentation of the luxury spare parts market. It provides a professional, secure hub where enthusiasts and sellers can manage inventories and execute transactions with confidence.
 
-# Core Areas of Expertise:
+# Core Features
 
-Aesthetic Detailing: Deep interior and exterior cleaning using specialized techniques to restore a "showroom" finish.
+**User Management:** Secure registration, authentication, and profile administration.
 
-Paint Correction: Removal of swirls, scratches, and oxidation to enhance the depth and clarity of the vehicle's paint.
+**Inventory Module:** Tools to publish, edit, and delete parts with detailed technical specifications (brand, model, year, and condition).
 
-Ceramic Coating: Application of advanced nanotechnology layers for long-lasting protection against UV rays, chemicals, and contaminants.
+**Advanced Search:** Intelligent filtering system based on vehicle compatibility.
 
-Upholstery Care: Deep cleaning and conditioning of leather and fabric interiors to preserve comfort and value.
+**Reputation System:** User ratings and reviews based on transaction history.
 
-Engine Cleaning: Safe and detailed cleaning of the engine bay to maintain performance visibility and aesthetics.
+**Responsive Design:** Fully functional across desktop and mobile devices.
 
 # Stack
 
