@@ -18,7 +18,7 @@ Lotus Body Car is a Consumer-to-Consumer (CToC) system that addresses the fragme
 
 **Advanced Search:** Intelligent filtering system based on vehicle compatibility.
 
-**Reputation System:** User ratings and reviews based on transaction history.
+**Reputation System:** User ratings based on transaction history.
 
 **Responsive Design:** Fully functional across desktop and mobile devices.
 
